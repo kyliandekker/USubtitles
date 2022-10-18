@@ -18,7 +18,7 @@ namespace USubtitles.Editor
 		{
 			CoopScoopAudioClip coopScoopAudioClip = new CoopScoopAudioClip();
 			coopScoopAudioClip.Clip = Selection.activeObject as AudioClip;
-			string assetPathAndName = AssetDatabase.GenerateUniqueAssetPath(AssetDatabase.GetAssetPath(Selection.activeObject) + Selection.activeObject + ".asset");
+			string assetPathAndName = AssetDatabase.GenerateUniqueAssetPath(AssetDatabase.GetAssetPath(Selection.activeObject) + ".asset");
 
 			AssetDatabase.CreateAsset(coopScoopAudioClip, assetPathAndName);
 

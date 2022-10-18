@@ -65,13 +65,19 @@ namespace USubtitles.Editor
 			SubtitleEditorVariables.Color_MarkerSelected = EditorGUILayout.ColorField(new GUIContent("Marker Selected"), SubtitleEditorVariables.Color_MarkerSelected);
 			SubtitleEditorVariables.Color_OutlineColor = EditorGUILayout.ColorField(new GUIContent("Outline"), SubtitleEditorVariables.Color_OutlineColor);
 			SubtitleEditorVariables.Color_TimelineBackground = EditorGUILayout.ColorField(new GUIContent("Timeline Background"), SubtitleEditorVariables.Color_TimelineBackground);
-			SubtitleEditorVariables.Color_TimelineBackline = EditorGUILayout.ColorField(new GUIContent("Timeline Bacline"), SubtitleEditorVariables.Color_TimelineBackline);
+			SubtitleEditorVariables.Color_TimelineBackline = EditorGUILayout.ColorField(new GUIContent("Timeline Backline"), SubtitleEditorVariables.Color_TimelineBackline);
 			SubtitleEditorVariables.Color_Timeline = EditorGUILayout.ColorField(new GUIContent("Timeline"), SubtitleEditorVariables.Color_Timeline);
 			SubtitleEditorVariables.Color_WaveformColor = EditorGUILayout.ColorField(new GUIContent("Waveform"), SubtitleEditorVariables.Color_WaveformColor);
 			SubtitleEditorVariables.Float_Saturation = EditorGUILayout.FloatField(new GUIContent("Saturation"), SubtitleEditorVariables.Float_Saturation);
 
 			if (GUI.changed)
+			{
 				Save();
+
+				WaveEditor[] windows = Resources.FindObjectsOfTypeAll<WaveEditor>();
+				WaveEditor window = windows.Length == 0 ? EditorWindow.GetWindow<WaveEditor>() : windows[0];
+				window.Repaint();
+			}
 		}
 
 		private static void Save()
