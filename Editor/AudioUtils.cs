@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace USubtitles.Editor
+namespace UAudio.USubtitles.Editor
 {
 	public class AudioUtils
 	{

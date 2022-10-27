@@ -3,7 +3,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace USubtitles
+namespace UAudio.USubtitles.Editor
 {
 	public static class AudioUtility
 	{
