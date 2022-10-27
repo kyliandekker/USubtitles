@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace UAudio.USubtitles.Editor
+namespace USubtitles.Editor
 {
 	public class EditorPreferences
 	{

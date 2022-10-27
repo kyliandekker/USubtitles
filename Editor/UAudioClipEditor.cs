@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace UAudio.USubtitles.Editor
+namespace USubtitles.Editor
 {
 	[CustomEditor(typeof(UAudioClip), true)]
 	public class UAudioClipEditor : UnityEditor.Editor

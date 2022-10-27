@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace UAudio.USubtitles
+namespace USubtitles
 {
 	[System.Serializable]
 	public class Line
