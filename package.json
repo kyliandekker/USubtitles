@@ -1,0 +1,20 @@
+{
+    "name": "com.uaudio.usubtitles",
+    "version": "0.1.10",
+    "displayName": "USubtitles",
+    "description": "Subtitle utility for Unity",
+    "unity": "2021.3",
+    "unityRelease": "0f1",
+    "dependencies": {
+    },
+    "keywords": [
+        "audio",
+        "subtitles"
+    ],
+    "author": {
+        "name": "Kylian Dekker",
+        "email": "kyliandekker2000@gmail.com",
+        "url": "https://www.kyliandekker.com"
+    },
+    "type": "library"
+}
