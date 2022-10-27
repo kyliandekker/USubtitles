@@ -1,6 +1,6 @@
 {
     "name": "com.uaudio.usubtitles",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "displayName": "USubtitles",
     "description": "Subtitle utility for Unity",
     "unity": "2021.3",
