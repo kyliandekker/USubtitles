@@ -15,6 +15,7 @@ namespace USubtitles.Editor
 		public static Color Color_TimelineBackline = new Color32(45, 45, 45, 255);
 		public static Color Color_Timeline = new Color32(209, 148, 66, 255);
 		public static Color Color_WaveformColor = new Color32(144, 209, 255, 255);
+		public static Color Color_MarkerColorClear = new Color32(165, 67, 67, 255);
 
 		public static float Float_Saturation = 1.5f;
 	}
@@ -28,23 +29,29 @@ namespace USubtitles.Editor
 
 	public class DialogueItemWindow : EditorWindow
 	{
-		private CoopScoopAudioClip _clip = null;
+		private UAudioClip _clip = null;
 		private int _index = -1;
+
+		SerializedObject _serializedObject = null;
 
 		private void OnGUI()
 		{
 			if (!_clip || _index < 0)
 				return;
 
-			var so = new SerializedObject(_clip);
-			EditorGUILayout.PropertyField(so.FindProperty("Dialogue").GetArrayElementAtIndex(_index), new GUIContent("Current DialogueItem"));
-			so.ApplyModifiedProperties();
+			if (_serializedObject == null)
+				_serializedObject = new SerializedObject(_clip);
+
+			_serializedObject.Update();
+			EditorGUILayout.PropertyField(_serializedObject.FindProperty("Dialogue").GetArrayElementAtIndex(_index), new GUIContent("Current DialogueItem"));
+			_serializedObject.ApplyModifiedProperties();
 		}
 
-		public void SetClip(CoopScoopAudioClip clip)
+		public void SetClip(UAudioClip clip)
 		{
 			_clip = clip;
 			titleContent = new GUIContent(_clip.name + " (" + _index + ")");
+			_serializedObject = null;
 		}
 
 		public void SetIndex(int dialogueIndex) => _index = dialogueIndex;
@@ -64,7 +71,7 @@ namespace USubtitles.Editor
 
 		DialogueItemWindow _dialogueItemWindow = null;
 
-		private CoopScoopAudioClip _clip = null;
+		private UAudioClip _clip = null;
 
 		public float _wavePosition = 0.0f;
 		private float _zoom = 1.0f;
@@ -84,16 +91,16 @@ namespace USubtitles.Editor
 
 		public void LoadFromFile(string assetPath)
 		{
-			CoopScoopAudioClip clip = AssetDatabase.LoadAssetAtPath<CoopScoopAudioClip>(assetPath);
+			UAudioClip clip = AssetDatabase.LoadAssetAtPath<UAudioClip>(assetPath);
 			SetCPClip(clip);
 		}
 
-		public void LoadFromFile(CoopScoopAudioClip clip)
+		public void LoadFromFile(UAudioClip clip)
 		{
 			SetCPClip(clip);
 		}
 
-		private void SetCPClip(CoopScoopAudioClip clip)
+		private void SetCPClip(UAudioClip clip)
 		{
 			_clip = clip;
 			titleContent = new GUIContent(_clip.name);
@@ -294,15 +301,20 @@ namespace USubtitles.Editor
 			for (int i = 0; i < _clip.Dialogue.Count; i++)
 			{
 				float markerX = bigRect.size.x / _clip.Clip.samples * _clip.Dialogue[i].SamplePosition;
+
+				if (_clip.Dialogue[i].Clear)
+				{
+					Rect clearRect = new Rect(new Vector2(markerX + 5.0f, bigRect.y - 15f), new Vector2(10, 15));
+					EditorGUI.DrawRect(clearRect, SubtitleEditorVariables.Color_MarkerColorClear);
+				}
+
 				Rect markerRect = new Rect(new Vector2(markerX, bigRect.y), new Vector2(1, bigRect.size.y));
 				markerRect.x *= _zoom;
 				markerRect.x -= scrollPos.x;
 
 				Color color = SubtitleEditorVariables.Color_Marker;
 				if (i == _dialogueIndex)
-				{
 					color = SubtitleEditorVariables.Color_MarkerSelected;
-				}
 				EditorGUI.DrawRect(markerRect, color);
 
 				Rect extraRect = new Rect(new Vector2(markerRect.x, markerRect.y - 7.5f), new Vector2(20, 15));
@@ -342,11 +354,7 @@ namespace USubtitles.Editor
 						if (!markerRect.Contains(evt.mousePosition) && !extraRect.Contains(evt.mousePosition))
 							break;
 
-						_dialogueIndex = i;
-						_dialogueItemWindow.SetIndex(_dialogueIndex);
-						_dialogueItemWindow.SetClip(_clip);
-						_dialogueItemWindow.Show();
-						_dialogueItemWindow.Focus();
+						SetMarker(i);
 						evt.Use();
 						Repaint();
 						break;
@@ -355,15 +363,31 @@ namespace USubtitles.Editor
 			}
 		}
 
+		private void SetMarker(int index)
+		{
+			_dialogueIndex = index;
+			_dialogueItemWindow.SetIndex(_dialogueIndex);
+			_dialogueItemWindow.SetClip(_clip);
+			_dialogueItemWindow.Show();
+			_dialogueItemWindow.Focus();
+		}
+
 		private void DrawSmallDialogueItems(Rect smallRect, ref Event evt)
 		{
 			for (int i = 0; i < _clip.Dialogue.Count; i++)
 			{
+				float markerX = smallRect.size.x / _clip.Clip.samples * _clip.Dialogue[i].SamplePosition;
+
+				if (_clip.Dialogue[i].Clear)
+				{
+					Rect clearRect = new Rect(new Vector2(markerX + 2.5f, smallRect.y - 8f), new Vector2(5, 8));
+					EditorGUI.DrawRect(clearRect, SubtitleEditorVariables.Color_MarkerColorClear);
+				}
+
 				Color color = SubtitleEditorVariables.Color_Marker;
 				if (i == _dialogueIndex)
 					color = SubtitleEditorVariables.Color_MarkerSelected;
 
-				float markerX = smallRect.size.x / _clip.Clip.samples * _clip.Dialogue[i].SamplePosition;
 				Rect markerRect = new Rect(new Vector2(markerX, smallRect.y), new Vector2(1, smallRect.size.y));
 				EditorGUI.DrawRect(markerRect, color);
 
@@ -398,11 +422,7 @@ namespace USubtitles.Editor
 						if (!markerRect.Contains(evt.mousePosition) && !extraRect.Contains(evt.mousePosition))
 							break;
 
-						_dialogueIndex = i;
-						_dialogueItemWindow.SetIndex(_dialogueIndex);
-						_dialogueItemWindow.SetClip(_clip);
-						_dialogueItemWindow.Show();
-						_dialogueItemWindow.Focus();
+						SetMarker(i);
 						evt.Use();
 						Repaint();
 						break;
@@ -530,6 +550,8 @@ namespace USubtitles.Editor
 			DialogueItem dialogueItem = new DialogueItem();
 			dialogueItem.SamplePosition = samplePosition;
 			_clip.Dialogue.Add(dialogueItem);
+
+			SetMarker(_clip.Dialogue.Count - 1);
 		}
 	}
 }

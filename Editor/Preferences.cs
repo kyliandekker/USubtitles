@@ -13,6 +13,7 @@ namespace USubtitles.Editor
 		public static Color Default_TimelineBackline = new Color32(45, 45, 45, 255);
 		public static Color Default_Timeline = new Color32(209, 148, 66, 255);
 		public static Color Default_WaveformColor = new Color32(144, 209, 255, 255);
+		public static Color Default_MarkerColorClear = new Color32(165, 67, 67, 255);
 
 		public static float Default_Float_Saturation = 1.5f;
 
@@ -28,6 +29,7 @@ namespace USubtitles.Editor
 			SetColor("Color_TimelineBackline", ref SubtitleEditorVariables.Color_TimelineBackline, Default_TimelineBackline);
 			SetColor("Color_Timeline", ref SubtitleEditorVariables.Color_Timeline, Default_Timeline);
 			SetColor("Color_WaveformColor", ref SubtitleEditorVariables.Color_WaveformColor, Default_WaveformColor);
+			SetColor("Color_MarkerColorClear", ref SubtitleEditorVariables.Color_MarkerColorClear, Default_MarkerColorClear);
 			SetFloat("Float_Saturation", ref SubtitleEditorVariables.Float_Saturation, Default_Float_Saturation);
 
 			prefsLoaded = true;
@@ -63,6 +65,7 @@ namespace USubtitles.Editor
 			SubtitleEditorVariables.Color_ContainerBackground = EditorGUILayout.ColorField(new GUIContent("Container Background"), SubtitleEditorVariables.Color_ContainerBackground);
 			SubtitleEditorVariables.Color_Marker = EditorGUILayout.ColorField(new GUIContent("Marker"), SubtitleEditorVariables.Color_Marker);
 			SubtitleEditorVariables.Color_MarkerSelected = EditorGUILayout.ColorField(new GUIContent("Marker Selected"), SubtitleEditorVariables.Color_MarkerSelected);
+			SubtitleEditorVariables.Color_MarkerColorClear = EditorGUILayout.ColorField(new GUIContent("Marker Clear Color"), SubtitleEditorVariables.Color_MarkerColorClear);
 			SubtitleEditorVariables.Color_OutlineColor = EditorGUILayout.ColorField(new GUIContent("Outline"), SubtitleEditorVariables.Color_OutlineColor);
 			SubtitleEditorVariables.Color_TimelineBackground = EditorGUILayout.ColorField(new GUIContent("Timeline Background"), SubtitleEditorVariables.Color_TimelineBackground);
 			SubtitleEditorVariables.Color_TimelineBackline = EditorGUILayout.ColorField(new GUIContent("Timeline Backline"), SubtitleEditorVariables.Color_TimelineBackline);
@@ -90,6 +93,7 @@ namespace USubtitles.Editor
 			EditorPrefs.SetString("Color_TimelineBackline", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_TimelineBackline));
 			EditorPrefs.SetString("Color_Timeline", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_Timeline));
 			EditorPrefs.SetString("Color_WaveformColor", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_WaveformColor));
+			EditorPrefs.SetString("Color_MarkerColorClear", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_MarkerColorClear));
 			EditorPrefs.SetFloat("Float_Saturation", SubtitleEditorVariables.Float_Saturation);
 		}
 	}

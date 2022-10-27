@@ -50,12 +50,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CoopScoopAudioClip.cs" />
+    <Compile Include="UAudioClip.cs" />
     <Compile Include="DialogueItem.cs" />
     <Compile Include="Editor\AudioPlayer.cs" />
     <Compile Include="Editor\AudioUtility.cs" />
     <Compile Include="Editor\AudioUtils.cs" />
-    <Compile Include="Editor\CoopScoopAudioClipEditor.cs" />
+    <Compile Include="Editor\UAudioClipEditor.cs" />
     <Compile Include="Editor\DialogueItemEditor.cs" />
     <Compile Include="Editor\Preferences.cs" />
     <Compile Include="Editor\Utils.cs" />
