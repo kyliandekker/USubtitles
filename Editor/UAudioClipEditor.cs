@@ -322,9 +322,6 @@ namespace USubtitles.Editor
 					if (_timelineInteraction != TimelineInteraction.TimelineInteraction_Time && _timelineInteraction != TimelineInteraction.TimelineInteraction_None)
 						break;
 
-					_dialogueIndex = -1;
-					_timelineInteraction = TimelineInteraction.TimelineInteraction_Time;
-
 					if (!rect.Contains(e.mousePosition))
 						break;
 
@@ -344,11 +341,17 @@ namespace USubtitles.Editor
 					}
 					else if (e.type == EventType.MouseDown || e.type == EventType.MouseDrag)
 					{
+						_timelineInteraction = TimelineInteraction.TimelineInteraction_Time;
+						_dialogueIndex = -1;
+
 						SetWavePosition(_clip.Clip.length / rect.size.x * (e.mousePosition.x - (rect.x * _zoom)), true);
 						Repaint();
 					}
 					else if (e.type == EventType.DragUpdated || e.type == EventType.DragPerform)
 					{
+						_timelineInteraction = TimelineInteraction.TimelineInteraction_Time;
+						_dialogueIndex = -1;
+
 						Object dragged_object = DragAndDrop.objectReferences[0];
 						DragAndDrop.visualMode = dragged_object.GetType() == typeof(AudioClip) ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
 
