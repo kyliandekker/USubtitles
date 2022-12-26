@@ -5,8 +5,8 @@ namespace USubtitles.Editor
 {
 	public class WaveformDisplay
 	{
-		private AudioClip _clip = null;
-		private AudioClip _currentClip = null;
+		private AudioClip _clip = null, _currentClip = null;
+		public AudioClip Clip => _clip;
 
 		private Texture2D texture = null;
 

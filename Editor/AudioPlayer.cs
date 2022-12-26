@@ -20,6 +20,8 @@ namespace USubtitles.Editor
 		public AudioState Prev => _prev;
 		public AudioState State => _state;
 
+		public float WavePosition = 0.0f;
+
 		public void SetClip(AudioClip clip)
 		{
 			SetState(AudioState.AudioState_Stopped);

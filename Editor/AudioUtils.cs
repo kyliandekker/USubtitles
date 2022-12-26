@@ -8,7 +8,7 @@ namespace USubtitles.Editor
 		{
 			float[] samples = new float[audio.channels * audio.samples];
 			float[] waveform = new float[size];
-			audio.GetData(samples, 0);
+			_ = audio.GetData(samples, 0);
 			int packSize = audio.samples * audio.channels / size;
 			float max = 0f;
 			int c = 0;

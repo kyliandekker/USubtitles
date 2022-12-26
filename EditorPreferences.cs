@@ -6,8 +6,10 @@ namespace USubtitles.Editor
 	public class EditorPreferences
 	{
 		public static Color Default_ContainerBackground = new Color32(72, 72, 72, 255);
+		public static Color Default_ToolbarBackground = new Color32(45, 55, 51, 255);
 		public static Color Default_Marker = new Color32(76, 153, 127, 255);
 		public static Color Default_MarkerSelected = new Color32(63, 127, 105, 255);
+		public static Color Default_MarkerHover = new Color32(113, 155, 140, 255);
 		public static Color Default_OutlineColor = new Color32(83, 83, 83, 255);
 		public static Color Default_TimelineBackground = new Color32(32, 32, 32, 255);
 		public static Color Default_TimelineBackline = new Color32(45, 45, 45, 255);
@@ -19,10 +21,12 @@ namespace USubtitles.Editor
 
 		private static bool prefsLoaded = false;
 
-		private static void Load()
+		public static void Load()
 		{
 			SetColor("Color_ContainerBackground", ref SubtitleEditorVariables.Color_ContainerBackground, Default_ContainerBackground);
+			SetColor("Color_ToolbarBackground", ref SubtitleEditorVariables.Color_ToolbarBackground, Default_ToolbarBackground);
 			SetColor("Color_Marker", ref SubtitleEditorVariables.Color_Marker, Default_Marker);
+			SetColor("Color_MarkerHover", ref SubtitleEditorVariables.Color_MarkerHover, Default_MarkerHover);
 			SetColor("Color_MarkerSelected", ref SubtitleEditorVariables.Color_MarkerSelected, Default_MarkerSelected);
 			SetColor("Color_Outline", ref SubtitleEditorVariables.Color_OutlineColor, Default_OutlineColor);
 			SetColor("Color_TimelineBackground", ref SubtitleEditorVariables.Color_TimelineBackground, Default_TimelineBackground);
@@ -49,10 +53,7 @@ namespace USubtitles.Editor
 
 		private static void SetFloat(string key, ref float refFloat, float defaultValue)
 		{
-			if (EditorPrefs.HasKey(key))
-				refFloat = EditorPrefs.GetFloat(key);
-			else
-				refFloat = defaultValue;
+			refFloat = EditorPrefs.HasKey(key) ? EditorPrefs.GetFloat(key) : defaultValue;
 		}
 
 		[PreferenceItem("Subtitle Editor")]
@@ -63,8 +64,10 @@ namespace USubtitles.Editor
 
 			EditorGUILayout.LabelField("Version: " + SubtitleEditorVariables.Version.ToString());
 			SubtitleEditorVariables.Color_ContainerBackground = EditorGUILayout.ColorField(new GUIContent("Container Background"), SubtitleEditorVariables.Color_ContainerBackground);
+			SubtitleEditorVariables.Color_ToolbarBackground = EditorGUILayout.ColorField(new GUIContent("Toolbar Background"), SubtitleEditorVariables.Color_ToolbarBackground);
 			SubtitleEditorVariables.Color_Marker = EditorGUILayout.ColorField(new GUIContent("Marker"), SubtitleEditorVariables.Color_Marker);
 			SubtitleEditorVariables.Color_MarkerSelected = EditorGUILayout.ColorField(new GUIContent("Marker Selected"), SubtitleEditorVariables.Color_MarkerSelected);
+			SubtitleEditorVariables.Color_MarkerHover = EditorGUILayout.ColorField(new GUIContent("Marker Hover"), SubtitleEditorVariables.Color_MarkerHover);
 			SubtitleEditorVariables.Color_MarkerColorClear = EditorGUILayout.ColorField(new GUIContent("Marker Clear Color"), SubtitleEditorVariables.Color_MarkerColorClear);
 			SubtitleEditorVariables.Color_OutlineColor = EditorGUILayout.ColorField(new GUIContent("Outline"), SubtitleEditorVariables.Color_OutlineColor);
 			SubtitleEditorVariables.Color_TimelineBackground = EditorGUILayout.ColorField(new GUIContent("Timeline Background"), SubtitleEditorVariables.Color_TimelineBackground);
@@ -74,26 +77,22 @@ namespace USubtitles.Editor
 			SubtitleEditorVariables.Float_Saturation = EditorGUILayout.FloatField(new GUIContent("Saturation"), SubtitleEditorVariables.Float_Saturation);
 
 			if (GUI.changed)
-			{
 				Save();
-
-				WaveEditor[] windows = Resources.FindObjectsOfTypeAll<WaveEditor>();
-				WaveEditor window = windows.Length == 0 ? EditorWindow.GetWindow<WaveEditor>() : windows[0];
-				window.Repaint();
-			}
 		}
 
 		private static void Save()
 		{
 			EditorPrefs.SetString("Color_ContainerBackground", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_ContainerBackground));
+			EditorPrefs.SetString("Color_ToolbarBackground", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_ToolbarBackground));
 			EditorPrefs.SetString("Color_Marker", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_Marker));
 			EditorPrefs.SetString("Color_MarkerSelected", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_MarkerSelected));
+			EditorPrefs.SetString("Color_MarkerHover", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_MarkerHover));
+			EditorPrefs.SetString("Color_MarkerColorClear", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_MarkerColorClear));
 			EditorPrefs.SetString("Color_Outline", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_OutlineColor));
 			EditorPrefs.SetString("Color_TimelineBackground", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_TimelineBackground));
 			EditorPrefs.SetString("Color_TimelineBackline", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_TimelineBackline));
 			EditorPrefs.SetString("Color_Timeline", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_Timeline));
 			EditorPrefs.SetString("Color_WaveformColor", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_WaveformColor));
-			EditorPrefs.SetString("Color_MarkerColorClear", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_MarkerColorClear));
 			EditorPrefs.SetFloat("Float_Saturation", SubtitleEditorVariables.Float_Saturation);
 		}
 	}
