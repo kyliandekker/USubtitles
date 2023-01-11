@@ -30,6 +30,7 @@ namespace USubtitles.Editor
 			_buttonPreviewRemove = null;
 
 		SerializedProperty _currentDialogueItem = null;
+		protected Rect rect;
 
 		public override void OnInspectorGUI()
 		{
@@ -60,7 +61,7 @@ namespace USubtitles.Editor
 			bool showDialogueItem = _dialogueIndex > -1 && _dialogueIndex < _clip.Dialogue.Count && _currentDialogueItem != null;
 
 			float totalHeight = smallWaveformRect.height + toolbarRect.height + (showDialogueItem ? dialogueRect.height : 0);
-			Rect r = EditorGUILayout.GetControlRect(GUILayout.Width(size.x), GUILayout.Height(totalHeight));
+			rect = EditorGUILayout.GetControlRect(GUILayout.Width(size.x), GUILayout.Height(totalHeight));
 
 			DrawToolbar(toolbarRect);
 
@@ -384,5 +385,28 @@ namespace USubtitles.Editor
 			_dialogueIndex = index;
 			_currentDialogueItem = serializedObject.FindProperty("Dialogue").GetArrayElementAtIndex(_dialogueIndex);
 		}
+		
+
+		[MenuItem("Assets/Create/UAudioClip", priority = 1)]
+		private static void CreateUAudioClipFromAudioClip()
+		{
+			for (int i = 0; i < Selection.objects.Length; i++)
+			{
+				Object obj = Selection.objects[i];
+
+				UAudioClip uAudioClip = new UAudioClip();
+				uAudioClip.Clip = obj as AudioClip;
+				string assetPathAndName = AssetDatabase.GenerateUniqueAssetPath(AssetDatabase.GetAssetPath(obj) + ".asset");
+
+				AssetDatabase.CreateAsset(uAudioClip, assetPathAndName);
+
+				AssetDatabase.SaveAssets();
+				AssetDatabase.Refresh();
+				EditorUtility.FocusProjectWindow();
+			}
+		}
+
+		[MenuItem("Assets/Create/UAudioClip", true)]
+		private static bool CreateUAudioClipFromAudioClipValidation() => Selection.activeObject is AudioClip;
 	}
 }
