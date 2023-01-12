@@ -112,13 +112,14 @@ namespace USubtitles.Editor
 			float buttonMargin = 10;
 			float buttonSize = 30;
 			float toolbarDivide = toolbarRect.height / 2;
-			Rect buttonPos = new Rect(new Vector3(toolbarRect.x + buttonMargin, toolbarRect.y + toolbarDivide - (buttonSize / 2)), new Vector2(buttonSize, buttonSize));
-			if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewStop, "Stop")))
-				_player.SetState(AudioState.AudioState_Stopped);
 
 			EditorGUI.DrawRect(toolbarRect, SubtitleEditorVariables.Color_ToolbarBackground);
 
+			Rect buttonPos = new Rect(new Vector3(toolbarRect.x + buttonMargin, toolbarRect.y + toolbarDivide - (buttonSize / 2)), new Vector2(buttonSize, buttonSize));
+			if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewStop, "Stop")))
+				_player.SetState(AudioState.AudioState_Stopped);
 			buttonPos.x += buttonSize + buttonMargin;
+
 			if (_player.State == AudioState.AudioState_Playing)
 			{
 				if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewPause, "Pause")))
@@ -130,6 +131,7 @@ namespace USubtitles.Editor
 					_player.SetState(AudioState.AudioState_Playing, CalculateSamples(_player.WavePosition));
 			}
 			buttonPos.x += buttonSize + buttonMargin;
+
 			if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewZoomIn, "Zoom In")))
 			{
 				if (_zoom < 3.0f)
@@ -137,6 +139,7 @@ namespace USubtitles.Editor
 				Repaint();
 			}
 			buttonPos.x += buttonSize + buttonMargin;
+
 			if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewZoomOut, "Zoom Out")))
 			{
 				if (_zoom > 1.0f)
@@ -144,13 +147,16 @@ namespace USubtitles.Editor
 				Repaint();
 			}
 			buttonPos.x += buttonSize + buttonMargin;
+
 			if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewAdd, "Add Marker")))
 				AddMarker(CalculateSamples(_player.WavePosition));
 			bool enabled = GUI.enabled;
 			GUI.enabled = _dialogueIndex > -1 && _dialogueIndex < _clip.Dialogue.Count ? true : false;
 			buttonPos.x += buttonSize + buttonMargin;
+
 			if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewRemove, "Remove Marker")))
 				RemoveMarker();
+			buttonPos.x += buttonSize + buttonMargin;
 			GUI.enabled = enabled;
 		}
 
