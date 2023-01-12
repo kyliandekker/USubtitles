@@ -5,19 +5,19 @@ namespace USubtitles.Editor
 {
 	public class WaveformDisplay
 	{
-		private AudioClip _clip = null, _currentClip = null;
-		public AudioClip Clip => _clip;
+		private AudioClip _currentClip = null;
+		public AudioClip Clip { get; private set; } = null;
 
 		private Texture2D texture = null;
 
-		public void SetClip(AudioClip clip) => _clip = clip;
+		public void SetClip(AudioClip clip) => Clip = clip;
 
 		public void Draw(Rect rect)
 		{
-			if (_currentClip != _clip)
+			if (_currentClip != Clip)
 			{
-				_currentClip = _clip;
-				texture = AudioUtils.PaintWaveformSpectrum(AudioUtils.GetWaveform(_clip, (int)rect.width, SubtitleEditorVariables.Preferences.Float_Saturation), (int)rect.height, SubtitleEditorVariables.Preferences.Color_Waveform);
+				_currentClip = Clip;
+				texture = AudioUtils.PaintWaveformSpectrum(AudioUtils.GetWaveform(Clip, (int)rect.width, SubtitleEditorVariables.Preferences.Float_Saturation), (int)rect.height, SubtitleEditorVariables.Preferences.Color_Waveform);
 			}
 
 			if (texture)

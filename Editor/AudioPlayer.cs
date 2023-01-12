@@ -1,5 +1,3 @@
-using System;
-using UnityEditor;
 using UnityEngine;
 
 namespace USubtitles.Editor
@@ -14,12 +12,10 @@ namespace USubtitles.Editor
 	public class AudioPlayer
 	{
 		private AudioClip _clip = null;
-
-		private AudioState _state = AudioState.AudioState_Stopped;
 		public AudioState _prev = AudioState.AudioState_Stopped;
 
 		public AudioState Prev => _prev;
-		public AudioState State => _state;
+		public AudioState State { get; private set; } = AudioState.AudioState_Stopped;
 
 		public float WavePosition = 0.0f;
 
@@ -32,14 +28,14 @@ namespace USubtitles.Editor
 		public void Update()
 		{
 			bool isClipPlaying = AudioUtility.IsClipPlaying();
-			if (_state == AudioState.AudioState_Playing && !isClipPlaying)
+			if (State == AudioState.AudioState_Playing && !isClipPlaying)
 				SetState(AudioState.AudioState_Stopped);
 		}
 
 		public void SetState(AudioState state, uint samplePosition = 0)
 		{
 			_prev = State;
-			_state = state;
+			State = state;
 			switch (State)
 			{
 				case AudioState.AudioState_Playing:
@@ -61,7 +57,7 @@ namespace USubtitles.Editor
 
 		public AudioState GetState()
 		{
-			return _state;
+			return State;
 		}
 	}
 }
