@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace USubtitles.Editor
@@ -16,6 +17,7 @@ namespace USubtitles.Editor
 		public static Color Default_Timeline = new Color32(209, 148, 66, 255);
 		public static Color Default_WaveformColor = new Color32(144, 209, 255, 255);
 		public static Color Default_MarkerColorClear = new Color32(165, 67, 67, 255);
+		public static KeyCode Default_KeyCode_Marker = KeyCode.M;
 
 		public static float Default_Float_Saturation = 1.5f;
 
@@ -34,9 +36,20 @@ namespace USubtitles.Editor
 			SetColor("Color_Timeline", ref SubtitleEditorVariables.Color_Timeline, Default_Timeline);
 			SetColor("Color_WaveformColor", ref SubtitleEditorVariables.Color_WaveformColor, Default_WaveformColor);
 			SetColor("Color_MarkerColorClear", ref SubtitleEditorVariables.Color_MarkerColorClear, Default_MarkerColorClear);
+			SetKeyCode("KeyCode_Marker", ref SubtitleEditorVariables.KeyCode_Marker, Default_KeyCode_Marker);
 			SetFloat("Float_Saturation", ref SubtitleEditorVariables.Float_Saturation, Default_Float_Saturation);
 
 			prefsLoaded = true;
+		}
+
+		private static void SetKeyCode(string key, ref KeyCode keyCode, KeyCode defaultValue)
+		{
+			if (EditorPrefs.HasKey(key))
+			{
+				keyCode = (KeyCode) EditorPrefs.GetInt(key);
+			}
+			else
+				keyCode = defaultValue;
 		}
 
 		private static void SetColor(string key, ref Color color, Color defaultValue)
@@ -74,6 +87,7 @@ namespace USubtitles.Editor
 			SubtitleEditorVariables.Color_TimelineBackline = EditorGUILayout.ColorField(new GUIContent("Timeline Backline"), SubtitleEditorVariables.Color_TimelineBackline);
 			SubtitleEditorVariables.Color_Timeline = EditorGUILayout.ColorField(new GUIContent("Timeline"), SubtitleEditorVariables.Color_Timeline);
 			SubtitleEditorVariables.Color_WaveformColor = EditorGUILayout.ColorField(new GUIContent("Waveform"), SubtitleEditorVariables.Color_WaveformColor);
+			SubtitleEditorVariables.KeyCode_Marker = (KeyCode)EditorGUILayout.EnumPopup("Add Marker Key", SubtitleEditorVariables.KeyCode_Marker);
 			SubtitleEditorVariables.Float_Saturation = EditorGUILayout.FloatField(new GUIContent("Saturation"), SubtitleEditorVariables.Float_Saturation);
 
 			if (GUI.changed)
@@ -93,6 +107,7 @@ namespace USubtitles.Editor
 			EditorPrefs.SetString("Color_TimelineBackline", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_TimelineBackline));
 			EditorPrefs.SetString("Color_Timeline", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_Timeline));
 			EditorPrefs.SetString("Color_WaveformColor", "#" + ColorUtility.ToHtmlStringRGBA(SubtitleEditorVariables.Color_WaveformColor));
+			EditorPrefs.SetInt("KeyCode_Marker", (int)SubtitleEditorVariables.KeyCode_Marker);
 			EditorPrefs.SetFloat("Float_Saturation", SubtitleEditorVariables.Float_Saturation);
 		}
 	}

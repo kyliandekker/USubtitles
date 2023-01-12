@@ -18,6 +18,7 @@ namespace USubtitles.Editor
 		public static Color Color_Timeline = new Color32(209, 148, 66, 255);
 		public static Color Color_WaveformColor = new Color32(144, 209, 255, 255);
 		public static Color Color_MarkerColorClear = new Color32(165, 67, 67, 255);
+		public static KeyCode KeyCode_Marker = KeyCode.M;
 
 		public static float Float_Saturation = 1.5f;
 	}

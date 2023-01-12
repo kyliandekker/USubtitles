@@ -338,14 +338,26 @@ namespace USubtitles.Editor
 					if (e.keyCode == KeyCode.Space)
 					{
 						if (_player.GetState() == AudioState.AudioState_Playing)
+						{
 							_player.SetState(AudioState.AudioState_Paused);
+							e.Use();
+						}
 						else
+						{
 							_player.SetState(AudioState.AudioState_Playing, CalculateSamples(_player.WavePosition));
+							e.Use();
+						}
 					}
 					else if (e.keyCode == KeyCode.Delete)
+					{
 						RemoveMarker();
-					else if (e.keyCode == KeyCode.M)
+						e.Use();
+					}
+					else if (e.keyCode == SubtitleEditorVariables.KeyCode_Marker)
+					{
 						AddMarker(CalculateSamples(_player.WavePosition));
+						e.Use();
+					}
 					break;
 				}
 				case EventType.MouseDown:
@@ -372,6 +384,7 @@ namespace USubtitles.Editor
 							if (_zoom > 1.0f)
 								SetZoom(_zoom - 0.1f);
 						}
+						e.Use();
 						Repaint();
 					}
 					else if (e.type == EventType.MouseDown || e.type == EventType.MouseDrag)
@@ -380,6 +393,7 @@ namespace USubtitles.Editor
 						_dialogueIndex = -1;
 
 						SetWavePosition(_clip.Clip.length / rect.size.x * (e.mousePosition.x - (rect.x * _zoom)), true);
+						e.Use();
 						Repaint();
 					}
 					else if (e.type == EventType.DragUpdated || e.type == EventType.DragPerform)
@@ -401,7 +415,6 @@ namespace USubtitles.Editor
 							Repaint();
 						}
 					}
-					e.Use();
 					break;
 				}
 			}
