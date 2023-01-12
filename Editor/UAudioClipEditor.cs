@@ -113,7 +113,7 @@ namespace USubtitles.Editor
 			float buttonSize = 30;
 			float toolbarDivide = toolbarRect.height / 2;
 
-			EditorGUI.DrawRect(toolbarRect, SubtitleEditorVariables.Color_ToolbarBackground);
+			EditorGUI.DrawRect(toolbarRect, SubtitleEditorVariables.Preferences.Color_ToolbarBackground);
 
 			Rect buttonPos = new Rect(new Vector3(toolbarRect.x + buttonMargin, toolbarRect.y + toolbarDivide - (buttonSize / 2)), new Vector2(buttonSize, buttonSize));
 			if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewStop, "Stop")))
@@ -216,12 +216,12 @@ namespace USubtitles.Editor
 			scrollPos = GUI.BeginScrollView(scrollRect, scrollPos, zoomedRect, true, false, GUI.skin.horizontalScrollbar, GUIStyle.none);
 
 			#region TIMELINE
-			EditorGUI.DrawRect(rect, SubtitleEditorVariables.Color_TimelineBackground);
+			EditorGUI.DrawRect(rect, SubtitleEditorVariables.Preferences.Color_TimelineBackground);
 			Rect outlineRect = new Rect(rect.position, new Vector3(rect.width, 1));
 			for (int i = 0; i < 3; i++)
 			{
 				outlineRect.y += rect.height / 4;
-				EditorGUI.DrawRect(outlineRect, SubtitleEditorVariables.Color_TimelineBackline);
+				EditorGUI.DrawRect(outlineRect, SubtitleEditorVariables.Preferences.Color_TimelineBackline);
 			}
 #endregion
 
@@ -262,7 +262,7 @@ namespace USubtitles.Editor
 				if (_clip.Dialogue[i].Clear)
 				{
 					Rect clearRect = new Rect(new Vector2(markerX + (marker_width / 2), rect.y - marker_height), new Vector2(marker_width, marker_height));
-					drawList.Add(new DrawRect(clearRect, SubtitleEditorVariables.Color_MarkerColorClear));
+					drawList.Add(new DrawRect(clearRect, SubtitleEditorVariables.Preferences.Color_MarkerClear));
 				}
 
 				Rect markerRect = new Rect(new Vector2(markerX, rect.y), new Vector2(1, rect.size.y));
@@ -277,12 +277,13 @@ namespace USubtitles.Editor
 				fullRect.width = 35f;
 
 
-				Color color = SubtitleEditorVariables.Color_Marker;
+				Color color = SubtitleEditorVariables.Preferences.Color_Marker;
 				if (fullRect.Contains(e.mousePosition))
-					color = SubtitleEditorVariables.Color_MarkerHover;
+					color = SubtitleEditorVariables.Preferences.Color_MarkerHover;
 				if (i == _dialogueIndex)
-					color = SubtitleEditorVariables.Color_MarkerSelected;
+					color = SubtitleEditorVariables.Preferences.Color_MarkerSelected;
 
+				Debug.Log("T");
 				EditorGUI.DrawRect(markerRect, color);
 				drawList.Add(new DrawRect(extraRect, color));
 
@@ -353,7 +354,7 @@ namespace USubtitles.Editor
 						RemoveMarker();
 						e.Use();
 					}
-					else if (e.keyCode == SubtitleEditorVariables.KeyCode_Marker)
+					else if (e.keyCode == SubtitleEditorVariables.Preferences.KeyCode_Marker)
 					{
 						AddMarker(CalculateSamples(_player.WavePosition));
 						e.Use();

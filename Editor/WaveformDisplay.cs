@@ -10,10 +10,6 @@ namespace USubtitles.Editor
 
 		private Texture2D texture = null;
 
-		private Color _waveformColor = SubtitleEditorVariables.Color_WaveformColor;
-
-		private float _saturation = SubtitleEditorVariables.Float_Saturation;
-
 		public void SetClip(AudioClip clip) => _clip = clip;
 
 		public void Draw(Rect rect)
@@ -21,7 +17,7 @@ namespace USubtitles.Editor
 			if (_currentClip != _clip)
 			{
 				_currentClip = _clip;
-				texture = AudioUtils.PaintWaveformSpectrum(AudioUtils.GetWaveform(_clip, (int)rect.width, _saturation), (int)rect.height, _waveformColor);
+				texture = AudioUtils.PaintWaveformSpectrum(AudioUtils.GetWaveform(_clip, (int)rect.width, SubtitleEditorVariables.Preferences.Float_Saturation), (int)rect.height, SubtitleEditorVariables.Preferences.Color_Waveform);
 			}
 
 			if (texture)
