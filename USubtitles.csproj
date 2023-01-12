@@ -59,9 +59,9 @@
     <Compile Include="Editor\UAudioClipEditor.cs" />
     <Compile Include="Editor\DialogueItemEditor.cs" />
     <Compile Include="Editor\Utils.cs" />
-    <Compile Include="Editor\WaveEditor.cs" />
     <Compile Include="Editor\WaveformDisplay.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WaveEditor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

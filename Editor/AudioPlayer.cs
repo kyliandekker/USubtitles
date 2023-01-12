@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
@@ -56,6 +57,11 @@ namespace USubtitles.Editor
 			}
 		}
 
-		internal void SetPosition(uint samplePosition) => AudioUtility.SetClipSamplePosition(_clip, (int)samplePosition);
+		public void SetPosition(uint samplePosition) => AudioUtility.SetClipSamplePosition(_clip, (int)samplePosition);
+
+		public AudioState GetState()
+		{
+			return _state;
+		}
 	}
 }

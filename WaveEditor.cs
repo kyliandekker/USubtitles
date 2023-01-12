@@ -5,7 +5,7 @@ namespace USubtitles.Editor
 {
 	public static class SubtitleEditorVariables
 	{
-		public static float Version = 1.1f;
+		public static float Version = 1.2f;
 
 		public static Color Color_ContainerBackground = new Color32(72, 72, 72, 255);
 		public static Color Color_ToolbarBackground = new Color32(45, 55, 51, 255);

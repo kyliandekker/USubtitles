@@ -27,7 +27,9 @@ namespace USubtitles.Editor
 			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Bold"));
 			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Italics"));
 			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Clear"));
-			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Color"));
+			bool useColor = property.FindPropertyRelative("UseColor").boolValue;
+			if (useColor)
+				height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Color"));
 			return height;
 		}
 
@@ -36,10 +38,25 @@ namespace USubtitles.Editor
 			EditorGUI.BeginProperty(position, label, property);
 
 			bool useColor = property.FindPropertyRelative("UseColor").boolValue;
+
+			float height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("SamplePosition"));
+			position.height = height;
+			EditorGUI.PropertyField(position, property.FindPropertyRelative("UseColor"));
+			position.y += height;
+
+			if (useColor)
+			{
+				EditorGUI.indentLevel++;
+				height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Color"));
+				position.height = height;
+				EditorGUI.PropertyField(position, property.FindPropertyRelative("Color"));
+				position.y += height;
+				EditorGUI.indentLevel--;
+			}
 			var temp = GUI.enabled;
 			GUI.enabled = false;
 
-			float height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("SamplePosition"));
+			height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("SamplePosition"));
 			position.height = height;
 			EditorGUI.PropertyField(position, property.FindPropertyRelative("SamplePosition"));
 			position.y += height;
@@ -49,11 +66,6 @@ namespace USubtitles.Editor
 			height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Lines"));
 			position.height = height;
 			EditorGUI.PropertyField(position, property.FindPropertyRelative("Lines"));
-			position.y += height;
-
-			height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("UseColor"));
-			position.height = height;
-			EditorGUI.PropertyField(position, property.FindPropertyRelative("UseColor"));
 			position.y += height;
 
 			height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Bold"));
@@ -70,14 +82,6 @@ namespace USubtitles.Editor
 			position.height = height;
 			EditorGUI.PropertyField(position, property.FindPropertyRelative("Clear"));
 			position.y += height;
-
-			if (useColor)
-			{
-				height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Color"));
-				position.height = height;
-				EditorGUI.PropertyField(position, property.FindPropertyRelative("Color"));
-				position.y += height;
-			}
 
 			EditorGUI.EndProperty();
 		}

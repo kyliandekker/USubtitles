@@ -34,6 +34,8 @@ namespace USubtitles.Editor
 
 		public override void OnInspectorGUI()
 		{
+			serializedObject.Update();
+
 			if (!_clip || !_smallWaveform.Clip)
 			{
 				_clip = target as UAudioClip;
@@ -41,6 +43,11 @@ namespace USubtitles.Editor
 				LoadResources();
 				EditorPreferences.Load();
 			}
+
+			if (!_clip)
+				return;
+
+			_player.Update();
 
 			Vector2 size = new Vector2(EditorGUIUtility.currentViewWidth, Screen.height);
 
@@ -58,14 +65,14 @@ namespace USubtitles.Editor
 			dialogueRect.x += buttonMargin;
 			dialogueRect.width -= buttonMargin * 2;
 
+			DrawToolbar(toolbarRect);
+
+			DrawSmallWaveform(smallWaveformRect);
+
 			bool showDialogueItem = _dialogueIndex > -1 && _dialogueIndex < _clip.Dialogue.Count && _currentDialogueItem != null;
 
 			float totalHeight = smallWaveformRect.height + toolbarRect.height + (showDialogueItem ? dialogueRect.height : 0);
 			rect = EditorGUILayout.GetControlRect(GUILayout.Width(size.x), GUILayout.Height(totalHeight));
-
-			DrawToolbar(toolbarRect);
-
-			DrawSmallWaveform(smallWaveformRect);
 
 			if (showDialogueItem)
 			{
@@ -97,6 +104,7 @@ namespace USubtitles.Editor
 			_clip.Dialogue.Add(dialogueItem);
 
 			SetMarker(_clip.Dialogue.Count - 1);
+			Repaint();
 		}
 
 		private void DrawToolbar(Rect toolbarRect)
@@ -137,20 +145,25 @@ namespace USubtitles.Editor
 			}
 			buttonPos.x += buttonSize + buttonMargin;
 			if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewAdd, "Add Marker")))
-			{
 				AddMarker(CalculateSamples(_player.WavePosition));
-				Repaint();
-			}
 			bool enabled = GUI.enabled;
 			GUI.enabled = _dialogueIndex > -1 && _dialogueIndex < _clip.Dialogue.Count ? true : false;
 			buttonPos.x += buttonSize + buttonMargin;
 			if (GUI.Button(buttonPos, new GUIContent(_buttonPreviewRemove, "Remove Marker")))
+				RemoveMarker();
+			GUI.enabled = enabled;
+		}
+
+		private void RemoveMarker()
+		{
+			if (_currentDialogueItem != null && _dialogueIndex > -1 && _dialogueIndex < _clip.Dialogue.Count)
 			{
+				_currentDialogueItem = null;
 				_clip.Dialogue.RemoveAt(_dialogueIndex);
 				_dialogueIndex = -1;
+				serializedObject.Update();
 				Repaint();
 			}
-			GUI.enabled = enabled;
 		}
 
 		private void SetClip(AudioClip clip)
@@ -314,6 +327,21 @@ namespace USubtitles.Editor
 					_timelineInteraction = TimelineInteraction.TimelineInteraction_None;
 					break;
 				}
+				case EventType.KeyDown:
+				{
+					if (e.keyCode == KeyCode.Space)
+					{
+						if (_player.GetState() == AudioState.AudioState_Playing)
+							_player.SetState(AudioState.AudioState_Paused);
+						else
+							_player.SetState(AudioState.AudioState_Playing, CalculateSamples(_player.WavePosition));
+					}
+					else if (e.keyCode == KeyCode.Delete)
+						RemoveMarker();
+					else if (e.keyCode == KeyCode.M)
+						AddMarker(CalculateSamples(_player.WavePosition));
+					break;
+				}
 				case EventType.MouseDown:
 				case EventType.MouseDrag:
 				case EventType.ScrollWheel:
@@ -383,10 +411,10 @@ namespace USubtitles.Editor
 		private void SetMarker(int index)
 		{
 			_dialogueIndex = index;
+			serializedObject.Update();
 			_currentDialogueItem = serializedObject.FindProperty("Dialogue").GetArrayElementAtIndex(_dialogueIndex);
 		}
 		
-
 		[MenuItem("Assets/Create/UAudioClip", priority = 1)]
 		private static void CreateUAudioClipFromAudioClip()
 		{
@@ -394,7 +422,7 @@ namespace USubtitles.Editor
 			{
 				Object obj = Selection.objects[i];
 
-				UAudioClip uAudioClip = new UAudioClip();
+				UAudioClip uAudioClip = ScriptableObject.CreateInstance<UAudioClip>();
 				uAudioClip.Clip = obj as AudioClip;
 				string assetPathAndName = AssetDatabase.GenerateUniqueAssetPath(AssetDatabase.GetAssetPath(obj) + ".asset");
 
