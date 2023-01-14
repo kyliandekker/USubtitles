@@ -61,7 +61,7 @@
     <Compile Include="Editor\Utils.cs" />
     <Compile Include="Editor\WaveformDisplay.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WaveEditor.cs" />
+    <Compile Include="Defines.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

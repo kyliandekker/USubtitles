@@ -10,8 +10,16 @@ namespace USubtitles.Editor
 
 		private Texture2D texture = null;
 
+		/// <summary>
+		/// Sets the audio clip (used for the waveform).
+		/// </summary>
+		/// <param name="clip">The audio clip.</param>
 		public void SetClip(AudioClip clip) => Clip = clip;
 
+		/// <summary>
+		/// Draws the waveform.
+		/// </summary>
+		/// <param name="rect">The total space reserved for the waveform.</param>
 		public void Draw(Rect rect)
 		{
 			if (_currentClip != Clip)

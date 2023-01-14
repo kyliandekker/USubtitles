@@ -16,6 +16,12 @@ namespace USubtitles.Editor
 		}
 	};
 
+	struct Interaction
+	{
+		public InteractionType LastInteraction;
+		public int Index;
+	}
+	 
 	[ExecuteInEditMode]
 	[CustomEditor(typeof(UAudioClip), true)]
 	public class UAudioClipEditor : UnityEditor.Editor
@@ -44,7 +50,7 @@ namespace USubtitles.Editor
 
 		private int _dialogueIndex = -1;
 
-		private TimelineInteraction _timelineInteraction = TimelineInteraction.TimelineInteraction_None;
+		private Interaction _currentInteraction = new Interaction();
 
 		private List<DrawRect> _drawList = new List<DrawRect>();
 
@@ -249,7 +255,7 @@ namespace USubtitles.Editor
 		/// Draws all the markers in the waveform.
 		/// </summary>
 		/// <param name="waveFormRect">The total space reserved for the waveform.</param>
-		private void DrawMarkers(Rect waveFormRect)
+		private void DrawMarkers(Rect waveFormRect, Rect zoomedRect)
 		{
 			for (int i = 0; i < _clip.Dialogue.Count; i++)
 			{
@@ -294,12 +300,24 @@ namespace USubtitles.Editor
 				// The top rect needs to be drawn outside of the scrollable area.
 				_drawList.Add(new DrawRect(topRect, color));
 
+
+				if (_currentInteraction.Index == i && _currentInteraction.LastInteraction == InteractionType.TimelineInteraction_Marker && e.type == EventType.MouseDrag && e.button == LEFT_CLICK)
+				{
+					float test = _clip.Clip.length / zoomedRect.size.x * (_scrollPos.x + e.mousePosition.x);
+					SetMarker(i);
+					_clip.Dialogue[i].SamplePosition = CalculateSamples(test);
+					if (_clip.Dialogue[i].SamplePosition > _clip.Clip.samples)
+						_clip.Dialogue[i].SamplePosition = (uint)_clip.Clip.samples;
+					e.Use();
+					Repaint();
+				}
+
 				switch (e.type)
 				{
 					// Dragging a marker.
 					case EventType.MouseDrag:
 					{
-						if (_timelineInteraction != TimelineInteraction.TimelineInteraction_Marker && _timelineInteraction != TimelineInteraction.TimelineInteraction_None)
+						if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Marker && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None)
 							break;
 
 						if (!fullRect.Contains(e.mousePosition))
@@ -312,13 +330,14 @@ namespace USubtitles.Editor
 							break;
 
 						// Set this marker as the current marker and drag it to the new position.
-						_timelineInteraction = TimelineInteraction.TimelineInteraction_Marker;
-						float mousePosx = e.mousePosition.x;
-						mousePosx /= _zoom;
-						mousePosx += _scrollPos.x;
-						float test = 1.0f / waveFormRect.width * mousePosx;
+						_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Marker;
+						_currentInteraction.Index = i;
+
+						float test = _clip.Clip.length / zoomedRect.size.x * (_scrollPos.x + e.mousePosition.x);
 						SetMarker(i);
-						_clip.Dialogue[i].SamplePosition = (uint)Mathf.FloorToInt(_clip.Clip.samples * test);
+						_clip.Dialogue[i].SamplePosition = CalculateSamples(test);
+						if (_clip.Dialogue[i].SamplePosition > _clip.Clip.samples)
+							_clip.Dialogue[i].SamplePosition = (uint) _clip.Clip.samples;
 						e.Use();
 						Repaint();
 						break;
@@ -326,7 +345,7 @@ namespace USubtitles.Editor
 					// Left or right clicking on a marker.
 					case EventType.MouseDown:
 					{
-						if (_timelineInteraction != TimelineInteraction.TimelineInteraction_Marker && _timelineInteraction != TimelineInteraction.TimelineInteraction_None)
+						if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Marker && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None)
 							break;
 
 						if (!fullRect.Contains(e.mousePosition))
@@ -335,7 +354,7 @@ namespace USubtitles.Editor
 						// Right click.
 						if (e.button == RIGHT_CLICK)
 						{
-							_timelineInteraction = TimelineInteraction.TimelineInteraction_Marker;
+							_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Marker;
 							ShowMarkerContextMenu(i);
 							e.Use();
 							Repaint();
@@ -346,7 +365,8 @@ namespace USubtitles.Editor
 							break;
 
 						// Set this marker as the selected marker.
-						_timelineInteraction = TimelineInteraction.TimelineInteraction_Marker;
+						_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Marker;
+						_currentInteraction.Index = i;
 						SetMarker(i);
 						e.Use();
 						Repaint();
@@ -410,7 +430,7 @@ namespace USubtitles.Editor
 			_waveform.Draw(zoomedRect);
 
 			DrawTimelineLine(waveFormRect);
-			DrawMarkers(waveFormRect);
+			DrawMarkers(waveFormRect, zoomedRect);
 
 			Event e = Event.current;
 
@@ -421,7 +441,7 @@ namespace USubtitles.Editor
 			{
 				case EventType.MouseUp:
 				{
-					_timelineInteraction = TimelineInteraction.TimelineInteraction_None;
+					_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_None;
 					break;
 				}
 				case EventType.KeyDown:
@@ -460,7 +480,7 @@ namespace USubtitles.Editor
 				case EventType.DragPerform:
 				case EventType.DragUpdated:
 				{
-					if (_timelineInteraction != TimelineInteraction.TimelineInteraction_Time && _timelineInteraction != TimelineInteraction.TimelineInteraction_None)
+					if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Time && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None)
 						break;
 
 					if (!waveFormRect.Contains(e.mousePosition))
@@ -502,12 +522,11 @@ namespace USubtitles.Editor
 						if (e.button != LEFT_CLICK)
 							break;
 
-						_timelineInteraction = TimelineInteraction.TimelineInteraction_Time;
+						_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Time;
 						_dialogueIndex = -1;
 
 						var mPos = e.mousePosition;
 
-						// TODO: Fix.
 						SetWavePosition(_clip.Clip.length / zoomedRect.size.x * (_scrollPos.x + mPos.x), true);
 						e.Use();
 						Repaint();
@@ -519,7 +538,7 @@ namespace USubtitles.Editor
 						if (e.button != LEFT_CLICK)
 							break;
 
-						_timelineInteraction = TimelineInteraction.TimelineInteraction_Time;
+						_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Time;
 						_dialogueIndex = -1;
 
 						// Check if the dragged UnityObject is an audio clip.
