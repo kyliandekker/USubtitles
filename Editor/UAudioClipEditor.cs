@@ -300,7 +300,6 @@ namespace USubtitles.Editor
 				// The top rect needs to be drawn outside of the scrollable area.
 				_drawList.Add(new DrawRect(topRect, color));
 
-
 				if (_currentInteraction.Index == i && _currentInteraction.LastInteraction == InteractionType.TimelineInteraction_Marker && e.type == EventType.MouseDrag && e.button == LEFT_CLICK)
 				{
 					float test = _clip.Clip.length / zoomedRect.size.x * (_scrollPos.x + e.mousePosition.x);
@@ -309,6 +308,7 @@ namespace USubtitles.Editor
 					if (_clip.Dialogue[i].SamplePosition > _clip.Clip.samples)
 						_clip.Dialogue[i].SamplePosition = (uint)_clip.Clip.samples;
 					e.Use();
+					SetWavePosition(_clip.Clip.length / _clip.Clip.samples * _clip.Dialogue[i].SamplePosition);
 					Repaint();
 				}
 
@@ -338,7 +338,7 @@ namespace USubtitles.Editor
 						_clip.Dialogue[i].SamplePosition = CalculateSamples(test);
 						if (_clip.Dialogue[i].SamplePosition > _clip.Clip.samples)
 							_clip.Dialogue[i].SamplePosition = (uint) _clip.Clip.samples;
-						SetWavePosition(_clip.Dialogue[i].SamplePosition);
+						SetWavePosition(_clip.Clip.length / _clip.Clip.samples * _clip.Dialogue[i].SamplePosition);
 						e.Use();
 						Repaint();
 						break;
@@ -369,7 +369,7 @@ namespace USubtitles.Editor
 						_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Marker;
 						_currentInteraction.Index = i;
 						SetMarker(i);
-						SetWavePosition(_clip.Dialogue[i].SamplePosition);
+						SetWavePosition(_clip.Clip.length / _clip.Clip.samples * _clip.Dialogue[i].SamplePosition);
 						e.Use();
 						Repaint();
 						break;
@@ -386,6 +386,7 @@ namespace USubtitles.Editor
 		{
 			// Calculate the timeline line based on the wave position.
 			float lineX = waveFormRect.size.x / (_clip ? _clip.Clip.length : 0) * _player.WavePosition;
+
 			Rect line = new Rect(waveFormRect.position, new Vector2(1, waveFormRect.size.y));
 			line.x += lineX;
 			line.x *= _zoom;
@@ -396,9 +397,10 @@ namespace USubtitles.Editor
 			if (_player.State == AudioState.AudioState_Playing)
 			{
 				float playLineX = waveFormRect.size.x / (_clip ? _clip.Clip.length : 0) * AudioUtility.GetClipPosition();
-				Rect playLine = line;
-				playLine.x -= lineX;
+				Rect playLine = new Rect(waveFormRect.position, new Vector2(1, waveFormRect.size.y));
 				playLine.x += playLineX;
+				playLine.x *= _zoom;
+				playLine.x -= _scrollPos.x;
 				EditorGUI.DrawRect(playLine, Color.red);
 				Repaint();
 			}
@@ -431,8 +433,8 @@ namespace USubtitles.Editor
 			// Draw the waveform.
 			_waveform.Draw(zoomedRect);
 
-			DrawTimelineLine(waveFormRect);
 			DrawMarkers(waveFormRect, zoomedRect);
+			DrawTimelineLine(waveFormRect);
 
 			Event e = Event.current;
 
@@ -447,8 +449,14 @@ namespace USubtitles.Editor
 				}
 				case EventType.KeyDown:
 				{
+					if (e.keyCode == KeyCode.Space && e.control)
+					{
+						_player.SetState(AudioState.AudioState_Stopped);
+						_player.SetState(AudioState.AudioState_Playing, CalculateSamples(_player.WavePosition));
+						e.Use();
+					}
 					// Play hotkey.
-					if (e.keyCode == KeyCode.Space)
+					else if (e.keyCode == KeyCode.Space)
 					{
 						if (_player.GetState() == AudioState.AudioState_Playing)
 						{
