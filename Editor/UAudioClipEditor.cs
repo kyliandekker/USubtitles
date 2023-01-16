@@ -177,7 +177,7 @@ namespace USubtitles.Editor
 		/// </summary>
 		/// <param name="position">Position of the timeline line.</param>
 		/// <param name="zoom">The zoom of the timeline.</param>
-		public void SetWavePosition(float position, bool zoom = false)
+		public void SetWavePosition(float position)
 		{
 			_player.WavePosition = position;
 			_player.SetPosition(CalculateSamples(_player.WavePosition));
@@ -338,6 +338,7 @@ namespace USubtitles.Editor
 						_clip.Dialogue[i].SamplePosition = CalculateSamples(test);
 						if (_clip.Dialogue[i].SamplePosition > _clip.Clip.samples)
 							_clip.Dialogue[i].SamplePosition = (uint) _clip.Clip.samples;
+						SetWavePosition(_clip.Dialogue[i].SamplePosition);
 						e.Use();
 						Repaint();
 						break;
@@ -368,6 +369,7 @@ namespace USubtitles.Editor
 						_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Marker;
 						_currentInteraction.Index = i;
 						SetMarker(i);
+						SetWavePosition(_clip.Dialogue[i].SamplePosition);
 						e.Use();
 						Repaint();
 						break;
@@ -434,8 +436,7 @@ namespace USubtitles.Editor
 
 			Event e = Event.current;
 
-			if (waveFormRect.Contains(e.mousePosition))
-				EditorGUIUtility.AddCursorRect(new Rect(0, 0, 500, 500), MouseCursor.Text);
+			EditorGUIUtility.AddCursorRect(waveFormRect, MouseCursor.Text);
 
 			switch (e.type)
 			{
@@ -527,7 +528,7 @@ namespace USubtitles.Editor
 
 						var mPos = e.mousePosition;
 
-						SetWavePosition(_clip.Clip.length / zoomedRect.size.x * (_scrollPos.x + mPos.x), true);
+						SetWavePosition(_clip.Clip.length / zoomedRect.size.x * (_scrollPos.x + mPos.x));
 						e.Use();
 						Repaint();
 						break;
