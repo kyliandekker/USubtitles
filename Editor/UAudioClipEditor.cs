@@ -121,6 +121,40 @@ namespace USubtitles.Editor
 			float totalHeight = waveformRect.height + toolbarRect.height + (showDialogueItem ? dialogueItemRect.height : 0);
 			fullRect = EditorGUILayout.GetControlRect(GUILayout.Width(size.x), GUILayout.Height(totalHeight));
 
+			Event e = Event.current;
+			switch (e.type)
+			{
+				case EventType.MouseUp:
+				{
+					_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_None;
+					break;
+				}
+				case EventType.KeyDown:
+				{
+					if (e.keyCode == KeyCode.Space && e.control)
+					{
+						_player.SetState(AudioState.AudioState_Stopped);
+						_player.SetState(AudioState.AudioState_Playing, CalculateSamples(_player.WavePosition));
+						e.Use();
+					}
+					// Play hotkey.
+					else if (e.keyCode == KeyCode.Space)
+					{
+						if (_player.GetState() == AudioState.AudioState_Playing)
+						{
+							_player.SetState(AudioState.AudioState_Paused);
+							e.Use();
+						}
+						else
+						{
+							_player.SetState(AudioState.AudioState_Playing, CalculateSamples(_player.WavePosition));
+							e.Use();
+						}
+					}
+					break;
+				}
+			}
+
 			_ = serializedObject.ApplyModifiedProperties();
 		}
 
@@ -449,28 +483,8 @@ namespace USubtitles.Editor
 				}
 				case EventType.KeyDown:
 				{
-					if (e.keyCode == KeyCode.Space && e.control)
-					{
-						_player.SetState(AudioState.AudioState_Stopped);
-						_player.SetState(AudioState.AudioState_Playing, CalculateSamples(_player.WavePosition));
-						e.Use();
-					}
-					// Play hotkey.
-					else if (e.keyCode == KeyCode.Space)
-					{
-						if (_player.GetState() == AudioState.AudioState_Playing)
-						{
-							_player.SetState(AudioState.AudioState_Paused);
-							e.Use();
-						}
-						else
-						{
-							_player.SetState(AudioState.AudioState_Playing, CalculateSamples(_player.WavePosition));
-							e.Use();
-						}
-					}
 					// Deleting a selected marker.
-					else if (e.keyCode == KeyCode.Delete && _currentDialogueItem != null)
+					if (e.keyCode == KeyCode.Delete && _currentDialogueItem != null)
 					{
 						RemoveMarker(_dialogueIndex);
 						e.Use();
