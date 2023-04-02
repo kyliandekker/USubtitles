@@ -276,12 +276,18 @@ namespace USubtitles.Editor
 			}
 
 			if (DrawToolbarButton(ref buttonPos, new GUIContent(_buttonPreviewAdd, "Add Marker")))
+			{
+				Undo.RecordObject(_clip, "Added marker");
 				AddMarker(CalculateSamples(_player.WavePosition));
+			}
 			bool enabled = GUI.enabled;
 			GUI.enabled = _dialogueIndex > -1 && _dialogueIndex < _clip.Dialogue.Count ? true : false;
 
 			if (DrawToolbarButton(ref buttonPos, new GUIContent(_buttonPreviewRemove, "Remove Marker")))
+			{
+				Undo.RecordObject(_clip, "Removed marker");
 				RemoveMarker(_dialogueIndex);
+			}
 			GUI.enabled = enabled;
 		}
 
@@ -486,12 +492,14 @@ namespace USubtitles.Editor
 					// Deleting a selected marker.
 					if (e.keyCode == KeyCode.Delete && _currentDialogueItem != null)
 					{
+						Undo.RecordObject(_clip, "Removed marker");
 						RemoveMarker(_dialogueIndex);
 						e.Use();
 					}
 					// Creating a new marker by hotkey.
 					else if (e.keyCode == SubtitleEditorVariables.Preferences.KeyCode_Marker)
 					{
+						Undo.RecordObject(_clip, "Added marker");
 						AddMarker(CalculateSamples(_player.WavePosition));
 						e.Use();
 					}
