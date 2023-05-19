@@ -34,7 +34,7 @@ struct DrawRect
 
 [ExecuteInEditMode]
 [CustomEditor(typeof(UAudioClip), true)]
-public class NewAndImprovedEditorWindow : UnityEditor.Editor
+public class UAudioClipEditor : UnityEditor.Editor
 {
 	private UAudioClip _clip = null;
 
