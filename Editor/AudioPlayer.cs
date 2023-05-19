@@ -12,6 +12,8 @@ namespace USubtitles.Editor
 	public class AudioPlayer
 	{
 		private AudioClip _clip = null;
+		public AudioClip Clip => _clip;
+
 		public AudioState _prev = AudioState.AudioState_Stopped;
 
 		public AudioState Prev => _prev;
@@ -44,7 +46,7 @@ namespace USubtitles.Editor
 		/// </summary>
 		/// <param name="state">The new state the player will have.</param>
 		/// <param name="samplePosition">Optional sample position to be set.</param>
-		public void SetState(AudioState state, uint samplePosition = 0)
+		public void SetState(AudioState state, float samplePosition = 0)
 		{
 			_prev = State;
 			State = state;
@@ -69,7 +71,11 @@ namespace USubtitles.Editor
 		/// Sets the position of the current playback.
 		/// </summary>
 		/// <param name="samplePosition">The sample position in bytes.</param>
-		public void SetPosition(uint samplePosition) => AudioUtility.SetClipSamplePosition(_clip, (int)samplePosition);
+		public void SetPosition(float samplePosition)
+		{
+			WavePosition = samplePosition;
+			AudioUtility.SetClipSamplePosition(_clip, (int)samplePosition);
+		}
 
 		/// <summary>
 		/// Returns the state of the player (stopped, playing, paused).

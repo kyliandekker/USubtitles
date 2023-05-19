@@ -349,7 +349,25 @@ namespace USubtitles
 			Assembly unityEditorAssembly = typeof(AudioImporter).Assembly;
 			Type audioUtilClass = unityEditorAssembly.GetType("UnityEditor.AudioUtil");
 			MethodInfo method = audioUtilClass.GetMethod(
-				"GetSoundSize",
+				"HasPreview",
+				BindingFlags.Static | BindingFlags.Public
+				);
+			
+			bool hasPreview = (bool)method.Invoke(
+				null,
+				new object[] {
+				clip
+			}
+			);
+			
+			return hasPreview;
+		}
+
+		public static bool IsTrackerFile(AudioClip clip) {
+			Assembly unityEditorAssembly = typeof(AudioImporter).Assembly;
+			Type audioUtilClass = unityEditorAssembly.GetType("UnityEditor.AudioUtil");
+			MethodInfo method = audioUtilClass.GetMethod(
+				"IsTrackerFile",
 				BindingFlags.Static | BindingFlags.Public
 				);
 			
