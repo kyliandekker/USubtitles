@@ -18,7 +18,7 @@ namespace USubtitles
 		public List<Line> Lines = new List<Line>();
 		public bool UseColor = false;
 		public bool Bold = false;
-		public bool Italics = false;
+		public bool Italic = false;
 		public bool Clear = false;
 	}
 }

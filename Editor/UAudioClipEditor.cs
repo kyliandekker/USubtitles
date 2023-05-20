@@ -1,9 +1,12 @@
+using Codice.Client.BaseCommands;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Reflection.Emit;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 using USubtitles;
 using USubtitles.Editor;
 
@@ -34,7 +37,7 @@ struct DrawRect
 
 [ExecuteInEditMode]
 [CustomEditor(typeof(UAudioClip), true)]
-public class UAudioClipEditor : UnityEditor.Editor
+public class UAudioClipEditor : Editor
 {
 	private UAudioClip _clip = null;
 
@@ -93,8 +96,26 @@ public class UAudioClipEditor : UnityEditor.Editor
 
 	private void OnEnable()
 	{
-		Init();
 		m_HandleLinesMaterial = EditorGUIUtility.LoadRequired("SceneView/HandleLines.mat") as Material;
+	}
+
+	public override bool RequiresConstantRepaint()
+	{
+		return true;
+	}
+
+	public void OnDisable()
+	{
+		_audioPlayer.SetState(AudioState.AudioState_Stopped);
+
+		EditorPrefs.SetBool("AutoPlayAudio", s_AutoPlay);
+
+		if (m_PreviewUtility != null)
+		{
+			m_PreviewUtility.Cleanup();
+			m_PreviewUtility = null;
+		}
+		m_HandleLinesMaterial = null;
 	}
 
 	/*##################
@@ -237,6 +258,38 @@ public class UAudioClipEditor : UnityEditor.Editor
 		fullRect.x -= _markerTopRectSize.x / 2;
 		fullRect.width = _markerTopRectSize.x / 2 * 3;
 
+		string s = _clip.Dialogue[i].Lines.Count > 0 ? _clip.Dialogue[i].Lines[0].Text : "";
+		Rect labeblRect = markerRect;
+		labeblRect.x += 2;
+		labeblRect.y = fullRect.size.y / 2;
+		labeblRect.height = EditorGUIUtility.singleLineHeight;
+		GUIStyle style = new GUIStyle(GUI.skin.label);
+		style.richText = true;
+		if (_clip.Dialogue[i].Bold && _clip.Dialogue[i].Italic)
+			style.fontStyle = FontStyle.BoldAndItalic;
+		else if (_clip.Dialogue[i].Bold)
+			style.fontStyle = FontStyle.Bold;
+		else if (_clip.Dialogue[i].Italic)
+			style.fontStyle = FontStyle.Italic;
+		{
+			float width = _previewWindowRect.width - labeblRect.x;
+			if (_clip.Dialogue.Count >= (i + 1) + 1)
+			{
+				float nextMarkerX = _previewWindowRect.width / (_clip ? _clip.Clip.samples : 0) * _clip.Dialogue[i + 1].SamplePosition;
+				width = nextMarkerX - labeblRect.x;
+			}
+			labeblRect.width = width;
+			labeblRect.width -= 2;
+
+			float actualWidth = GUI.skin.label.CalcSize(new GUIContent(s)).x;
+			if (actualWidth < labeblRect.width)
+				labeblRect.width = actualWidth;
+		}
+
+		HandleMarkerEvents(fullRect, i); 
+		EditorGUI.DrawRect(labeblRect, new Color32(0, 0, 0, 155));
+		EditorGUI.LabelField(labeblRect, new GUIContent(s), style);
+
 		Event evt = Event.current;
 		Color color = USubtitleEditorVariables.Preferences.Color_Marker;
 		if (fullRect.Contains(evt.mousePosition))
@@ -254,8 +307,6 @@ public class UAudioClipEditor : UnityEditor.Editor
 		}
 
 		_drawList.Add(new DrawRect(topRect, color));
-
-		HandleMarkerEvents(fullRect, i);
 	}
 
 	/// <summary>
@@ -278,7 +329,7 @@ public class UAudioClipEditor : UnityEditor.Editor
 		menu.AddSeparator("Options/");
 		menu.AddItem(new GUIContent("Options/Clear"), _clip.Dialogue[index].Clear, SwitchClear, index);
 		menu.AddItem(new GUIContent("Options/Bold"), _clip.Dialogue[index].Bold, SwitchBold, index);
-		menu.AddItem(new GUIContent("Options/Italics"), _clip.Dialogue[index].Italics, SwitchItalics, index);
+		menu.AddItem(new GUIContent("Options/Italic"), _clip.Dialogue[index].Italic, SwitchItalic, index);
 		menu.ShowAsContext();
 		Repaint();
 	}
@@ -362,11 +413,11 @@ public class UAudioClipEditor : UnityEditor.Editor
 	/// Toggles the italics option.
 	/// </summary>
 	/// <param name="i">Index of the dialogue item.</param>
-	private void SwitchItalics(object i)
+	private void SwitchItalic(object i)
 	{
 		Undo.RecordObject(_clip, "Removed marker");
 		int index = (int)i;
-		_clip.Dialogue[index].Italics = !_clip.Dialogue[index].Italics;
+		_clip.Dialogue[index].Italic = !_clip.Dialogue[index].Italic;
 		serializedObject.Update();
 		EditorUtility.SetDirty(target);
 		Repaint();
@@ -403,7 +454,10 @@ public class UAudioClipEditor : UnityEditor.Editor
 	private AudioImporter _audioImporter = null;
 	public override Texture2D RenderStaticPreview(string assetPath, UnityEngine.Object[] subAssets, int width, int height)
 	{
-		if (_audioImporter == null || !ShaderUtil.hardwareSupportsRectRenderTexture)
+		if (_audioImporter == null)
+			Init();
+
+		if (!ShaderUtil.hardwareSupportsRectRenderTexture)
 			return null;
 
 		if (m_PreviewUtility == null)
@@ -418,7 +472,7 @@ public class UAudioClipEditor : UnityEditor.Editor
 
 	public override void OnPreviewGUI(Rect re, GUIStyle background)
 	{
-		if (!_clip.Clip || _clip.Clip != _waveform.Clip)
+		if (!_clip || !_clip.Clip || _clip.Clip != _waveform.Clip)
 			Init();
 
 		_previewWindowRect = re;
@@ -541,7 +595,7 @@ public class UAudioClipEditor : UnityEditor.Editor
 				}
 				case EventType.MouseUp:
 				{
-					if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None)
+					if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Time)
 						EditorUtility.SetDirty(target);
 					_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_None;
 					break;
@@ -555,20 +609,6 @@ public class UAudioClipEditor : UnityEditor.Editor
 			if (_audioPlayer.State == AudioState.AudioState_Playing)
 				Repaint();
 		}
-	}
-
-	public void OnDisable()
-	{
-		_audioPlayer.SetState(AudioState.AudioState_Stopped);
-
-		EditorPrefs.SetBool("AutoPlayAudio", s_AutoPlay);
-
-		if (m_PreviewUtility != null)
-		{
-			m_PreviewUtility.Cleanup();
-			m_PreviewUtility = null;
-		}
-		m_HandleLinesMaterial = null;
 	}
 
 	public override void OnPreviewSettings()

@@ -25,7 +25,7 @@ namespace USubtitles.Editor
 			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Lines"));
 			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("UseColor"));
 			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Bold"));
-			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Italics"));
+			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Italic"));
 			height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Clear"));
 			bool useColor = property.FindPropertyRelative("UseColor").boolValue;
 			if (useColor)
@@ -73,9 +73,9 @@ namespace USubtitles.Editor
 			EditorGUI.PropertyField(position, property.FindPropertyRelative("Bold"));
 			position.y += height;
 
-			height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Italics"));
+			height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Italic"));
 			position.height = height;
-			EditorGUI.PropertyField(position, property.FindPropertyRelative("Italics"));
+			EditorGUI.PropertyField(position, property.FindPropertyRelative("Italic"));
 			position.y += height;
 
 			height = EditorGUI.GetPropertyHeight(property.FindPropertyRelative("Clear"));
