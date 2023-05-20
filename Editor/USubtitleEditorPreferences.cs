@@ -21,7 +21,6 @@ namespace USubtitles.Editor
 		public Color Color_TimelineBackline = new Color32(45, 45, 45, 255);
 		public Color Color_Waveform = new Color32(144, 209, 255, 255);
 		public Color Color_MarkerClear = new Color32(165, 67, 67, 255);
-		public KeyCode KeyCode_Marker = KeyCode.M;
 		public float Float_Saturation = 1.5f;
 	}
 
@@ -42,7 +41,6 @@ namespace USubtitles.Editor
 			SetColor("Color_TimelineBackline", ref USubtitleEditorVariables.Preferences.Color_TimelineBackline);
 			SetColor("Color_Waveform", ref USubtitleEditorVariables.Preferences.Color_Waveform);
 			SetColor("Color_MarkerClear", ref USubtitleEditorVariables.Preferences.Color_MarkerClear);
-			SetKeyCode("KeyCode_Marker", ref USubtitleEditorVariables.Preferences.KeyCode_Marker);
 			SetFloat("Float_Saturation", ref USubtitleEditorVariables.Preferences.Float_Saturation);
 
 			prefsLoaded = true;
@@ -88,8 +86,6 @@ namespace USubtitles.Editor
 			EditorGUILayout.Space(space);
 			USubtitleEditorVariables.Preferences.Color_Waveform = EditorGUILayout.ColorField(new GUIContent("Waveform"), USubtitleEditorVariables.Preferences.Color_Waveform);
 			EditorGUILayout.Space(space);
-			USubtitleEditorVariables.Preferences.KeyCode_Marker = (KeyCode)EditorGUILayout.EnumPopup("Add Marker Key", USubtitleEditorVariables.Preferences.KeyCode_Marker);
-			EditorGUILayout.Space(space);
 			USubtitleEditorVariables.Preferences.Float_Saturation = EditorGUILayout.FloatField(new GUIContent("Saturation"), USubtitleEditorVariables.Preferences.Float_Saturation);
 
 			if (GUI.changed)
@@ -107,7 +103,6 @@ namespace USubtitles.Editor
 			EditorPrefs.SetString("Color_TimelineBackground", "#" + ColorUtility.ToHtmlStringRGBA(USubtitleEditorVariables.Preferences.Color_TimelineBackground));
 			EditorPrefs.SetString("Color_TimelineBackline", "#" + ColorUtility.ToHtmlStringRGBA(USubtitleEditorVariables.Preferences.Color_TimelineBackline));
 			EditorPrefs.SetString("Color_Waveform", "#" + ColorUtility.ToHtmlStringRGBA(USubtitleEditorVariables.Preferences.Color_Waveform));
-			EditorPrefs.SetInt("KeyCode_Marker", (int)USubtitleEditorVariables.Preferences.KeyCode_Marker);
 			EditorPrefs.SetFloat("Float_Saturation", USubtitleEditorVariables.Preferences.Float_Saturation);
 		}
 	}

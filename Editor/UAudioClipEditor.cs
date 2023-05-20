@@ -108,8 +108,6 @@ public class UAudioClipEditor : Editor
 	{
 		_audioPlayer.SetState(AudioState.AudioState_Stopped);
 
-		EditorPrefs.SetBool("AutoPlayAudio", s_AutoPlay);
-
 		if (m_PreviewUtility != null)
 		{
 			m_PreviewUtility.Cleanup();
@@ -281,7 +279,7 @@ public class UAudioClipEditor : Editor
 			labeblRect.width = width;
 			labeblRect.width -= 2;
 
-			float actualWidth = GUI.skin.label.CalcSize(new GUIContent(s)).x;
+			float actualWidth = style.CalcSize(new GUIContent(s)).x;
 			if (actualWidth < labeblRect.width)
 				labeblRect.width = actualWidth;
 		}
@@ -457,6 +455,9 @@ public class UAudioClipEditor : Editor
 		if (_audioImporter == null)
 			Init();
 
+		if (!_clip.Clip)
+			return null;
+
 		if (!ShaderUtil.hardwareSupportsRectRenderTexture)
 			return null;
 
@@ -474,6 +475,9 @@ public class UAudioClipEditor : Editor
 	{
 		if (!_clip || !_clip.Clip || _clip.Clip != _waveform.Clip)
 			Init();
+
+		if (!_clip.Clip)
+			return;
 
 		_previewWindowRect = re;
 
