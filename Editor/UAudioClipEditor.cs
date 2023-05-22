@@ -4,7 +4,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.Remoting.Contexts;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEditor;
+using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using USubtitles;
@@ -54,13 +57,11 @@ public class UAudioClipEditor : Editor
 	static bool s_AutoPlay;
 	static bool s_Loop;
 
-	static private GUIContent _playIcon, _pauseIcon, _autoPlayIcon, _loopIcon, _stopIcon, _plusIcon, _minusIcon;
+	static private GUIContent _playIcon, _pauseIcon, _autoPlayIcon, _loopIcon, _stopIcon, _plusIcon, _minusIcon, _settingsIcon;
 
 	private WaveformDisplay _waveform = new WaveformDisplay();
 
 	private Interaction _currentInteraction = new Interaction();
-
-	private int _selectedMarker = -1;
 
 	private List<DrawRect> _drawList = new List<DrawRect>();
 
@@ -92,6 +93,7 @@ public class UAudioClipEditor : Editor
 		_loopIcon = EditorGUIUtility.TrIconContent("d_preAudioLoopOff", "Loop on/off");
 		_plusIcon = EditorGUIUtility.TrIconContent("d_Toolbar Plus", "Add Marker");
 		_minusIcon = EditorGUIUtility.TrIconContent("d_Toolbar Minus", "Remove Marker");
+		_settingsIcon = EditorGUIUtility.TrIconContent("d_Settings", "Remove Marker");
 	}
 
 	private void OnEnable()
@@ -190,8 +192,36 @@ public class UAudioClipEditor : Editor
 		Event evt = Event.current;
 		switch (evt.type)
 		{
-			case EventType.MouseDrag:
 			case EventType.MouseDown:
+			{
+				if (fullRect.Contains(evt.mousePosition) || (_currentInteraction.LastInteraction == InteractionType.TimelineInteraction_Marker && _currentInteraction.Index == i))
+				{
+					if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Marker && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None)
+						break;
+
+					if (evt.button == LEFT_CLICK)
+					{
+						// Set this marker as the current marker and drag it to the new position.
+						_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Marker;
+						SetMarker(i);
+						evt.Use();
+						Repaint();
+					}
+					else if (evt.button == RIGHT_CLICK)
+					{
+						// Right click.
+						if (evt.button == RIGHT_CLICK)
+						{
+							_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Marker;
+							ShowMarkerContextMenu(i);
+							evt.Use();
+							Repaint();
+						}
+					}
+				}
+				break;
+			}
+			case EventType.MouseDrag:
 			{
 				if (fullRect.Contains(evt.mousePosition) || (_currentInteraction.LastInteraction == InteractionType.TimelineInteraction_Marker && _currentInteraction.Index == i))
 				{
@@ -208,17 +238,6 @@ public class UAudioClipEditor : Editor
 						_clip.Dialogue[i].SamplePosition = CalculateSamples(test);
 						evt.Use();
 						Repaint();
-					}
-					else if (evt.button == RIGHT_CLICK)
-					{
-						// Right click.
-						if (evt.button == RIGHT_CLICK)
-						{
-							_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Marker;
-							ShowMarkerContextMenu(i);
-							evt.Use();
-							Repaint();
-						}
 					}
 				}
 				break;
@@ -284,7 +303,7 @@ public class UAudioClipEditor : Editor
 				labeblRect.width = actualWidth;
 		}
 
-		HandleMarkerEvents(fullRect, i); 
+		HandleMarkerEvents(fullRect, i);
 		EditorGUI.DrawRect(labeblRect, new Color32(0, 0, 0, 155));
 		EditorGUI.LabelField(labeblRect, new GUIContent(s), style);
 
@@ -292,7 +311,7 @@ public class UAudioClipEditor : Editor
 		Color color = USubtitleEditorVariables.Preferences.Color_Marker;
 		if (fullRect.Contains(evt.mousePosition))
 			color = USubtitleEditorVariables.Preferences.Color_MarkerHover;
-		if (i == _selectedMarker)
+		if (i == _currentInteraction.Index)
 			color = USubtitleEditorVariables.Preferences.Color_MarkerSelected;
 
 		EditorGUI.DrawRect(markerRect, color);
@@ -471,148 +490,241 @@ public class UAudioClipEditor : Editor
 		return m_PreviewUtility.EndStaticPreview();
 	}
 
+	protected void AudioClipDragUI(Rect dropArea)
+	{
+		// Cache References:
+		Event currentEvent = Event.current;
+		EventType currentEventType = currentEvent.type;
+
+		if (!dropArea.Contains(currentEvent.mousePosition)) return;
+
+		switch (currentEventType)
+		{
+			case EventType.MouseDown:
+			{
+				DragAndDrop.PrepareStartDrag();
+				currentEvent.Use();
+
+				break;
+			}
+			case EventType.MouseDrag:
+			{
+				DragAndDrop.StartDrag("Dragging List ELement");
+				currentEvent.Use();
+				break;
+			}
+			case EventType.DragUpdated:
+			{
+				UnityEngine.Object dragged_object = DragAndDrop.objectReferences[0];
+				bool canBeDropped = dragged_object.GetType() == typeof(AudioClip);
+				DragAndDrop.visualMode = canBeDropped ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+				currentEvent.Use();
+				break;
+			}
+			case EventType.Repaint:
+			{
+				if (
+				DragAndDrop.visualMode == DragAndDropVisualMode.None ||
+				DragAndDrop.visualMode == DragAndDropVisualMode.Rejected) break;
+
+				Color color = USubtitleEditorVariables.Preferences.Color_Waveform;
+				color.a = 0.3f;
+				EditorGUI.DrawRect(dropArea, color);
+				break;
+			}
+			case EventType.DragPerform:
+			{
+				UnityEngine.Object dragged_object = DragAndDrop.objectReferences[0];
+				if (dragged_object.GetType() == typeof(AudioClip))
+				{
+					_clip.Clip = (AudioClip)dragged_object;
+					_ = serializedObject.ApplyModifiedProperties();
+					EditorUtility.SetDirty(_clip);
+				}
+				currentEvent.Use();
+				break;
+			}
+			case EventType.MouseUp:
+			{
+				// Clean up, in case MouseDrag never occurred:
+				DragAndDrop.PrepareStartDrag();
+				break;
+			}
+		}
+
+	}
+
 	public override void OnPreviewGUI(Rect re, GUIStyle background)
 	{
-		if (!_clip || !_clip.Clip || _clip.Clip != _waveform.Clip)
-			Init();
-
-		if (!_clip.Clip)
-			return;
-
 		_previewWindowRect = re;
 
 		_zoomedPreviewWindowRect = _previewWindowRect;
 		_zoomedPreviewWindowRect.width *= _zoom;
 		_zoomedPreviewWindowRect.x = -_scrollPos.x;
 
-		_drawList.Clear();
+		if (!_clip || !_clip.Clip || _clip.Clip != _waveform.Clip)
+			Init();
 
-		_audioPlayer.Update();
-
-		HandleTimelineZoom();
-
-		if (Event.current.type == EventType.Repaint)
-			background.Draw(_previewWindowRect, false, false, false, false);
-
-		int c = AudioUtility.GetChannelCount(_clip.Clip);
-
-		Event evt = Event.current;
-
-		// Handling whether the waveform can be previewed.
-		bool previewAble = AudioUtility.HasPreview(_clip.Clip) || !(AudioUtility.IsTrackerFile(_clip.Clip));
-		if (!previewAble)
+		if (!_clip.Clip)
 		{
-			float labelY = (_previewWindowRect.height > 150) ? _previewWindowRect.y + (_previewWindowRect.height / 2) - 10 : _previewWindowRect.y + (_previewWindowRect.height / 2) - 25;
-			if (_previewWindowRect.width > 64)
-			{
-				if (AudioUtility.IsTrackerFile(_clip.Clip))
-					EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, labelY, _previewWindowRect.width, 20), string.Format("Module file with " + AudioUtility.GetChannelCount(_clip.Clip) + " channels."));
-				else
-					EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, labelY, _previewWindowRect.width, 20), "Can not show PCM data for this file");
-			}
+			GUIStyle style = new();
+			style.fontStyle = FontStyle.Bold;
+			style.fontSize = 15;
+			style.normal.textColor = Color.white;
+			style.alignment = TextAnchor.MiddleCenter;
 
-			if (_audioPlayer.State == AudioState.AudioState_Playing)
-			{
-				float t = AudioUtility.GetClipPosition();
-
-				TimeSpan ts = new TimeSpan(0, 0, 0, 0, (int)(t * 1000.0f));
-
-				EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, _previewWindowRect.y, _previewWindowRect.width, 20), string.Format("Playing - {0:00}:{1:00}.{2:000}", ts.Minutes, ts.Seconds, ts.Milliseconds));
-			}
+			EditorGUI.LabelField(_previewWindowRect, new GUIContent("Drag a clip to this window"), style);
+			return;
 		}
 		else
 		{
-			_waveform ??= new WaveformDisplay();
-			if (!_waveform.Clip)
-				_waveform.SetClip(_clip.Clip);
+			_drawList.Clear();
 
-			Rect scrollRect = _previewWindowRect;
-			// Scrollbar around waveform.
-			_scrollPos = GUI.BeginScrollView(scrollRect, _scrollPos, _zoomedPreviewWindowRect, true, false, GUI.skin.horizontalScrollbar, GUIStyle.none);
+			_audioPlayer.Update();
+
+			HandleTimelineZoom();
+
+			if (Event.current.type == EventType.Repaint)
+				background.Draw(_previewWindowRect, false, false, false, false);
+
+			int c = AudioUtility.GetChannelCount(_clip.Clip);
+
+			Event evt = Event.current;
+
+			// Handling whether the waveform can be previewed.
+			bool previewAble = AudioUtility.HasPreview(_clip.Clip) || !(AudioUtility.IsTrackerFile(_clip.Clip));
+			if (!previewAble)
 			{
-				_waveform.Draw(_zoomedPreviewWindowRect);
-
-				// Waveform lines.
-				Rect rect_waveMarker = new Rect(_previewWindowRect.x, _previewWindowRect.y, 2, _previewWindowRect.height);
-				float markerLineX = _previewWindowRect.width / (_clip ? _clip.Clip.samples : 0) * _audioPlayer.WavePosition;
-				float playLineX = _previewWindowRect.width / (_clip ? _clip.Clip.length : 0) * AudioUtility.GetClipPosition();
-				Rect rect_timeLineMarker = new Rect(((rect_waveMarker.x + markerLineX) * _zoom) - _scrollPos.x, rect_waveMarker.y, rect_waveMarker.width, rect_waveMarker.height);
-				EditorGUI.DrawRect(rect_timeLineMarker, Color.red);
-				EditorGUI.DrawRect(new Rect(((rect_waveMarker.x + playLineX) * _zoom) - _scrollPos.x, rect_waveMarker.y, rect_waveMarker.width, rect_waveMarker.height), Color.white);
-
-				Rect fullRect = rect_timeLineMarker;
-				fullRect.x -= 6;
-				fullRect.width = 12;
-
-				if (evt.type == EventType.MouseDown && evt.button == RIGHT_CLICK)
-					if (fullRect.Contains(evt.mousePosition))
-						ShowTimelineMarkerContextMenu();
-
-				DrawMarkers();
-			}
-			GUI.EndScrollView();
-
-			// Channel text.
-			for (int i = 0; i < c; ++i)
-				if (c > 1 && _previewWindowRect.width > 64)
+				float labelY = (_previewWindowRect.height > 150) ? _previewWindowRect.y + (_previewWindowRect.height / 2) - 10 : _previewWindowRect.y + (_previewWindowRect.height / 2) - 25;
+				if (_previewWindowRect.width > 64)
 				{
-					var labelRect = new Rect(_previewWindowRect.x + 5, _previewWindowRect.y + (_previewWindowRect.height / c * i), 30, 20);
-					EditorGUI.DropShadowLabel(labelRect, "ch " + (i + 1));
+					if (AudioUtility.IsTrackerFile(_clip.Clip))
+						EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, labelY, _previewWindowRect.width, 20), string.Format("Module file with " + AudioUtility.GetChannelCount(_clip.Clip) + " channels."));
+					else
+						EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, labelY, _previewWindowRect.width, 20), "Can not show PCM data for this file");
 				}
 
-			// Time text.
-			float t = AudioUtility.GetClipPosition();
-			TimeSpan ts = new TimeSpan(0, 0, 0, 0, (int)(t * 1000.0f));
-			if (_previewWindowRect.width > 64)
-				EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, _previewWindowRect.y, _previewWindowRect.width, 20), string.Format("{0:00}:{1:00}.{2:000}", ts.Minutes, ts.Seconds, ts.Milliseconds));
+				if (_audioPlayer.State == AudioState.AudioState_Playing)
+				{
+					float t = AudioUtility.GetClipPosition();
+
+					TimeSpan ts = new TimeSpan(0, 0, 0, 0, (int)(t * 1000.0f));
+
+					EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, _previewWindowRect.y, _previewWindowRect.width, 20), string.Format("Playing - {0:00}:{1:00}.{2:000}", ts.Minutes, ts.Seconds, ts.Milliseconds));
+				}
+			}
 			else
-				EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, _previewWindowRect.y, _previewWindowRect.width, 20), string.Format("{0:00}:{1:00}", ts.Minutes, ts.Seconds));
-
-			switch (evt.type)
 			{
-				case EventType.MouseDrag:
-				case EventType.MouseDown:
+				_waveform ??= new WaveformDisplay();
+				if (!_waveform.Clip)
+					_waveform.SetClip(_clip.Clip);
+
+				Rect scrollRect = _previewWindowRect;
+				// Scrollbar around waveform.
+				_scrollPos = GUI.BeginScrollView(scrollRect, _scrollPos, _zoomedPreviewWindowRect, true, false, GUI.skin.horizontalScrollbar, GUIStyle.none);
 				{
-					if (evt.button == LEFT_CLICK)
+					_waveform.Draw(_zoomedPreviewWindowRect);
+
+					// Waveform lines.
+					Rect rect_waveMarker = new Rect(_previewWindowRect.x, _previewWindowRect.y, 2, _previewWindowRect.height);
+					float markerLineX = _previewWindowRect.width / (_clip ? _clip.Clip.samples : 0) * _audioPlayer.WavePosition;
+					float playLineX = _previewWindowRect.width / (_clip ? _clip.Clip.length : 0) * AudioUtility.GetClipPosition();
+					Rect rect_timeLineMarker = new Rect(((rect_waveMarker.x + markerLineX) * _zoom) - _scrollPos.x, rect_waveMarker.y, rect_waveMarker.width, rect_waveMarker.height);
+					EditorGUI.DrawRect(rect_timeLineMarker, Color.red);
+					EditorGUI.DrawRect(new Rect(((rect_waveMarker.x + playLineX) * _zoom) - _scrollPos.x, rect_waveMarker.y, rect_waveMarker.width, rect_waveMarker.height), Color.white);
+
+					Rect fullRect = rect_timeLineMarker;
+					fullRect.x -= 6;
+					fullRect.width = 12;
+
+					if (evt.type == EventType.MouseDown && evt.button == RIGHT_CLICK)
+						if (fullRect.Contains(evt.mousePosition))
+							ShowTimelineMarkerContextMenu();
+
+					DrawMarkers();
+				}
+				GUI.EndScrollView();
+
+				// Channel text.
+				for (int i = 0; i < c; ++i)
+					if (c > 1 && _previewWindowRect.width > 64)
 					{
-						if (_previewWindowRect.Contains(evt.mousePosition))
-						{
-							if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Time && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None)
-								break;
-
-							_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Time;
-
-							float startSample = _clip.Clip.samples / _zoomedPreviewWindowRect.width * (_scrollPos.x + evt.mousePosition.x);
-							if (_audioPlayer.State != AudioState.AudioState_Playing || _clip.Clip != _audioPlayer.Clip)
-							{
-								_audioPlayer.SetPosition(startSample);
-								if (s_AutoPlay)
-									_audioPlayer.SetState(AudioState.AudioState_Playing, startSample);
-							}
-							else
-								_audioPlayer.SetPosition(startSample);
-							Repaint();
-							evt.Use();
-						}
+						var labelRect = new Rect(_previewWindowRect.x + 5, _previewWindowRect.y + (_previewWindowRect.height / c * i), 30, 20);
+						EditorGUI.DropShadowLabel(labelRect, "ch " + (i + 1));
 					}
-					break;
-				}
-				case EventType.MouseUp:
+
+				// Time text.
+				float t = AudioUtility.GetClipPosition();
+				TimeSpan ts = new TimeSpan(0, 0, 0, 0, (int)(t * 1000.0f));
+				if (_previewWindowRect.width > 64)
+					EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, _previewWindowRect.y, _previewWindowRect.width, 20), string.Format("{0:00}:{1:00}.{2:000}", ts.Minutes, ts.Seconds, ts.Milliseconds));
+				else
+					EditorGUI.DropShadowLabel(new Rect(_previewWindowRect.x, _previewWindowRect.y, _previewWindowRect.width, 20), string.Format("{0:00}:{1:00}", ts.Minutes, ts.Seconds));
+
+				switch (evt.type)
 				{
-					if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Time)
-						EditorUtility.SetDirty(target);
-					_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_None;
-					break;
+					case EventType.MouseDown:
+					{
+						if (evt.button == LEFT_CLICK)
+						{
+							if (_previewWindowRect.Contains(evt.mousePosition))
+							{
+								if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Time && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None)
+									break;
+
+								_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Time;
+
+								Repaint();
+								evt.Use();
+							}
+						}
+						break;
+					}
+					case EventType.MouseDrag:
+					{
+						if (evt.button == LEFT_CLICK)
+						{
+							if (_previewWindowRect.Contains(evt.mousePosition))
+							{
+								if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Time && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None)
+									break;
+
+								_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_Time;
+
+								float startSample = _clip.Clip.samples / _zoomedPreviewWindowRect.width * (_scrollPos.x + evt.mousePosition.x);
+								if (_audioPlayer.State != AudioState.AudioState_Playing || _clip.Clip != _audioPlayer.Clip)
+								{
+									_audioPlayer.SetPosition(startSample);
+									if (s_AutoPlay)
+										_audioPlayer.SetState(AudioState.AudioState_Playing, startSample);
+								}
+								else
+									_audioPlayer.SetPosition(startSample);
+								Repaint();
+								evt.Use();
+							}
+						}
+						break;
+					}
+					case EventType.MouseUp:
+					{
+						if (_currentInteraction.LastInteraction != InteractionType.TimelineInteraction_None && _currentInteraction.LastInteraction != InteractionType.TimelineInteraction_Time)
+							EditorUtility.SetDirty(target);
+						_currentInteraction.LastInteraction = InteractionType.TimelineInteraction_None;
+						break;
+					}
 				}
+
+				// Draw all the objects on top.
+				for (int i = 0; i < _drawList.Count; i++)
+					EditorGUI.DrawRect(_drawList[i].rect, _drawList[i].color);
+
+				if (_audioPlayer.State == AudioState.AudioState_Playing)
+					Repaint();
 			}
-
-			// Draw all the objects on top.
-			for (int i = 0; i < _drawList.Count; i++)
-				EditorGUI.DrawRect(_drawList[i].rect, _drawList[i].color);
-
-			if (_audioPlayer.State == AudioState.AudioState_Playing)
-				Repaint();
 		}
+
+		AudioClipDragUI(_previewWindowRect);
 	}
 
 	public override void OnPreviewSettings()
@@ -650,7 +762,24 @@ public class UAudioClipEditor : Editor
 				if (GUILayout.Button(_minusIcon, EditorStyles.toolbarButton))
 					RemoveMarker(_currentInteraction.Index);
 			}
+
+			using (new EditorGUI.DisabledScope(_multiEditing))
+			{
+				var sliderRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight, GUILayout.Width(55f));
+				sliderRect.y -= 1f;
+				_zoom = GUI.HorizontalSlider(sliderRect, _zoom, ZOOM_MIN, ZOOM_MAX);
+			}
+
+			if (GUILayout.Button(_settingsIcon, EditorStyles.toolbarButton))
+			{
+				OpenPreferences();
+			}
 		}
+	}
+
+	private void OpenPreferences()
+	{
+		SettingsService.OpenUserPreferences("Preferences/Subtitle Editor");
 	}
 
 	[MenuItem("Assets/Create/UAudioClip", priority = 1)]
@@ -658,7 +787,7 @@ public class UAudioClipEditor : Editor
 	{
 		for (int i = 0; i < Selection.objects.Length; i++)
 		{
-            UnityEngine.Object obj = Selection.objects[i];
+			UnityEngine.Object obj = Selection.objects[i];
 
 			UAudioClip uAudioClip = ScriptableObject.CreateInstance<UAudioClip>();
 			uAudioClip.Clip = obj as AudioClip;
@@ -678,4 +807,45 @@ public class UAudioClipEditor : Editor
 
 	[MenuItem("Assets/Create/UAudioClip", true)]
 	private static bool CreateUAudioClipFromAudioClipValidation() => Selection.activeObject is AudioClip;
+
+	SerializedProperty _currentDialogueItem = null;
+	public override void OnInspectorGUI()
+	{
+		serializedObject.Update();
+
+		EditorGUILayout.BeginVertical("GroupBox");
+		EditorGUI.indentLevel++;
+		EditorGUILayout.BeginVertical("GroupBox");
+		EditorGUI.indentLevel++;
+		EditorGUILayout.PropertyField(serializedObject.FindProperty("Clip"), new GUIContent("Clip"));
+		EditorGUI.indentLevel--;
+		EditorGUILayout.EndVertical();
+
+		if (_clip.Clip != null)
+		{
+			if (_currentDialogueItem == null || serializedObject.FindProperty("Dialogue").GetArrayElementAtIndex(_currentInteraction.Index) != _currentDialogueItem)
+				_currentDialogueItem = serializedObject.FindProperty("Dialogue").GetArrayElementAtIndex(_currentInteraction.Index);
+
+			bool showDialogueItem = _currentInteraction.Index > -1 && _currentInteraction.Index < _clip.Dialogue.Count && _currentDialogueItem != null;
+
+			if (showDialogueItem)
+			{
+				EditorGUILayout.BeginVertical("GroupBox");
+				GUIStyle style = new();
+				style.fontStyle = FontStyle.Bold;
+				style.fontSize = 15;
+				style.normal.textColor = Color.white;
+				EditorGUILayout.LabelField("Current Dialogue", style);
+				EditorGUILayout.Space(5);
+				EditorGUI.indentLevel++;
+				_ = EditorGUILayout.PropertyField(_currentDialogueItem, new GUIContent("Current DialogueItem"));
+				EditorGUI.indentLevel--;
+				EditorGUILayout.EndVertical();
+			}
+		}
+		EditorGUI.indentLevel--;
+		EditorGUILayout.EndVertical();
+
+		_ = serializedObject.ApplyModifiedProperties();
+	}
 }
