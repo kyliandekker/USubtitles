@@ -1,7 +1,7 @@
-namespace USubtitles
-{
-	using UnityEngine;
+using UnityEngine;
 
+namespace UAudio.USubtitles
+{
 	public class USubtitlePreferences
 	{
 		public Color Color_ContainerBackground = new Color32(72, 72, 72, 255);

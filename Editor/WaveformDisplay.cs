@@ -3,7 +3,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace USubtitles.Editor
+namespace UAudio.USubtitles.Editor
 {
 	public class WaveformDisplay
 	{
