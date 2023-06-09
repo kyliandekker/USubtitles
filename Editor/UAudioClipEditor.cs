@@ -311,7 +311,7 @@ namespace UAudio.USubtitles.Editor
 			// If the sample has the clear option enabled, a rect appear on top of it to signify this.
 			if (_clip.Dialogue[i].Clear)
 			{
-				Rect clearRect = new Rect(new Vector2(markerX + (_markerClearRectSize.x / 2), _previewWindowRect.y - _markerClearRectSize.y), new Vector2(_markerClearRectSize.x, _markerClearRectSize.y));
+				Rect clearRect = new Rect(new Vector2(markerRect.x + (_markerClearRectSize.x / 2), _previewWindowRect.y - _markerClearRectSize.y), new Vector2(_markerClearRectSize.x, _markerClearRectSize.y));
 				_drawList.Add(new DrawRect(clearRect, USubtitleEditorVariables.Preferences.Color_MarkerClear));
 			}
 
